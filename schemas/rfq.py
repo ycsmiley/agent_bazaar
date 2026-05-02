@@ -6,13 +6,13 @@ inject arbitrary fields. All inputs are plain scalars; no eval / exec surface.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
 
-class TaskType(str, Enum):
+class TaskType(StrEnum):
     API_CALL = "api_call"
     COMPUTATION = "computation"
     DATA_FETCH = "data_fetch"
@@ -24,7 +24,6 @@ class Task(BaseModel):
     # Inputs must be primitives. Nested structures require an explicit schema
     # extension — we refuse arbitrary dicts to shut down prompt-injection vectors.
     input: dict[str, str | int | float | bool] = Field(default_factory=dict)
-    require_tee_proof: bool = False
     # JSON Schema (subset) describing the expected delivery payload.
     output_schema: dict[str, object] = Field(default_factory=dict)
 

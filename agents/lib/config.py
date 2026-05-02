@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
+from eth_account import Account
 
 
 @dataclass(frozen=True)
@@ -35,10 +36,6 @@ class Config:
     # Uniswap
     uniswap_api_base: str
     uniswap_api_key: str
-    # 0G
-    og_storage_indexer: str
-    og_compute_broker: str
-    og_compute_model: str
     # Identity (per-agent overrides from CLI)
     wallet_address: str
     private_key: str | None
@@ -58,8 +55,10 @@ def load_config(
         return os.getenv(name, default)
 
     role_upper = role.upper()
-    wallet = _get(f"{role_upper}_ADDRESS") or _get(f"{role_upper}_PRIVATE_KEY", "")
     pk = _get(f"{role_upper}_PRIVATE_KEY") or None
+    wallet = _get(f"{role_upper}_ADDRESS")
+    if not wallet and pk:
+        wallet = Account.from_key(pk).address
 
     axl_endpoint_key = (
         "BUYER_AXL_ENDPOINT" if role == "buyer" else "SELLER_AXL_ENDPOINT"
@@ -80,9 +79,6 @@ def load_config(
         keeperhub_workflow_refund=_get("KEEPERHUB_WORKFLOW_REFUND"),
         uniswap_api_base=_get("UNISWAP_API_BASE", "https://trade-api.gateway.uniswap.org/v1"),
         uniswap_api_key=_get("UNISWAP_API_KEY"),
-        og_storage_indexer=_get("OG_STORAGE_INDEXER"),
-        og_compute_broker=_get("OG_COMPUTE_BROKER"),
-        og_compute_model=_get("OG_COMPUTE_MODEL", "deepseek-chat-v3-0324"),
         wallet_address=wallet,
         private_key=pk,
     )

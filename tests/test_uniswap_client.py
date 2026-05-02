@@ -6,7 +6,6 @@ from httpx import Response
 
 from agents.lib.uniswap_client import UniswapClient
 
-
 BUYER = "0x" + "b" * 40
 USDC = "0x" + "1" * 40
 ETH = "0x" + "e" * 40

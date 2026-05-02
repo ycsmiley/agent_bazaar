@@ -110,7 +110,6 @@ class SellerAgent:
                 success_rate=0.957,
                 on_chain_proof_uri=f"erc8004://reputation/{self.agent_id}",
             ),
-            will_use_tee=False,
             signature="",
         )
         payload = quote.model_dump()

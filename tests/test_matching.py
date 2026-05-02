@@ -2,16 +2,15 @@ from __future__ import annotations
 
 import time
 
+from agents.lib.matching import rank_quotes, select_best
 from schemas.quote import Erc8004ReputationSnapshot, QuoteMessage
 from schemas.rfq import Budget, Constraints, RFQMessage, Task, TaskType
-from agents.lib.matching import rank_quotes, select_best
 
 
 def _rfq(
     *,
     budget: int = 500_000,
     min_rep: float = 0.8,
-    require_tee: bool = False,
 ) -> RFQMessage:
     return RFQMessage(
         rfq_id="rfq-1",
@@ -20,7 +19,6 @@ def _rfq(
         task=Task(
             type=TaskType.DATA_FETCH,
             input={"pair": "ETH/USDC"},
-            require_tee_proof=require_tee,
         ),
         budget=Budget(max_usdc_atomic=budget),
         constraints=Constraints(
@@ -38,7 +36,6 @@ def _quote(
     confidence: float,
     success_rate: float,
     delivery_ms: int = 3000,
-    use_tee: bool = False,
 ) -> QuoteMessage:
     return QuoteMessage(
         rfq_id="rfq-1",
@@ -52,7 +49,6 @@ def _quote(
             success_rate=success_rate,
             on_chain_proof_uri="https://x",
         ),
-        will_use_tee=use_tee,
         signature="fe" * 32,
     )
 
@@ -75,27 +71,7 @@ def test_over_budget_quotes_rejected():
     assert "rejected" in ranked[-1].reason
 
 
-def test_tee_requirement_enforced():
-    rfq = _rfq(require_tee=True)
-    no_tee = _quote(seller_id="aa", price=300_000, confidence=0.99, success_rate=0.99)
-    with_tee = _quote(
-        seller_id="bb", price=300_000, confidence=0.90, success_rate=0.95, use_tee=True
-    )
-    chosen = select_best(rfq, [no_tee, with_tee])
-    assert chosen is with_tee
-
-
 def test_low_reputation_rejected():
     rfq = _rfq(min_rep=0.9)
     bad = _quote(seller_id="aa", price=100_000, confidence=0.99, success_rate=0.8)
     assert select_best(rfq, [bad]) is None
-
-
-def test_tee_bonus_breaks_tie():
-    rfq = _rfq()
-    base = _quote(seller_id="aa", price=300_000, confidence=0.9, success_rate=0.9)
-    with_tee = _quote(
-        seller_id="bb", price=300_000, confidence=0.9, success_rate=0.9, use_tee=True
-    )
-    chosen = select_best(rfq, [base, with_tee])
-    assert chosen is with_tee

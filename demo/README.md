@@ -15,7 +15,7 @@ The 3-minute video lives at `demo/demo.mp4` (recorded last, from `scripts/run_de
 ## Screen layout
 
 - **Left**: buyer-side console log (RFQ broadcast, quote scoring, selected winner, TxIDs).
-- **Right**: seller-side console log (RFQ received, quote sent, task executing via 0G Compute, delivery payload shipped).
+- **Right**: seller-side console log (RFQ received, quote sent, task execution, delivery payload shipped).
 - **Bottom strip**: five block explorer tabs, one per TxID, kept open so the judge sees each tx confirming in real time.
 
 ## Talk-track
@@ -27,7 +27,7 @@ The 3-minute video lives at `demo/demo.mp4` (recorded last, from `scripts/run_de
    - Buyer's matching algorithm picks the winner on screen (print `score_quote` rationale).
    - Tx #1 lands: Uniswap bridge.
    - Tx #2 lands: KeeperHub lock.
-   - Seller runs 0G Compute TeeML inference, shows the tee_signature in its payload.
+   - Seller runs the task, hashes the canonical JSON result, and commits that hash on-chain.
    - Tx #3 lands: confirmDelivery with the content's root hash.
    - Buyer verifies the signature locally, then tx #4 lands (releaseFunds).
    - Tx #5 lands: ERC-8004 feedback.

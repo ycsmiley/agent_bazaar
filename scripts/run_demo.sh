@@ -9,12 +9,24 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 if [[ "${1:-}" == "--live" ]]; then
-  set -a; source .env; set +a
+  if [[ ! -f .env ]]; then
+    echo "Missing .env. Copy .env.example and fill live/testnet settings first." >&2
+    exit 1
+  fi
+  eval "$(python scripts/export_env.py .env)"
+  : "${RPC_URL:?RPC_URL is required}"
+  : "${ESCROW_ADDRESS:?ESCROW_ADDRESS is required}"
+  : "${USDC_ADDRESS:?USDC_ADDRESS is required}"
+  : "${BUYER_PRIVATE_KEY:?BUYER_PRIVATE_KEY is required}"
+  : "${SELLER_PRIVATE_KEY:?SELLER_PRIVATE_KEY is required}"
+  : "${BUYER_AXL_ENDPOINT:?BUYER_AXL_ENDPOINT is required}"
+  : "${SELLER_AXL_ENDPOINT:?SELLER_AXL_ENDPOINT is required}"
+
   python -m agents.seller_agent &
   SELLER_PID=$!
+  trap "kill $SELLER_PID 2>/dev/null || true" EXIT
   sleep 2
-  python -m agents.buyer_agent --task "fetch ETH/USDC spot" --budget 500000 --require-tee
-  trap "kill $SELLER_PID" EXIT
+  python -m agents.buyer_agent --task "fetch ETH/USDC spot" --budget 500000
   wait
 else
   python scripts/run_demo.py

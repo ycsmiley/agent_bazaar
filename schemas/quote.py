@@ -21,23 +21,15 @@ class QuoteMessage(BaseModel):
     quote_price_atomic: int = Field(gt=0, description="Quoted price in USDC atomic units.")
     confidence_score: float = Field(ge=0.0, le=1.0)
     estimated_delivery_ms: int = Field(gt=0)
-    og_storage_history_ref: str | None = Field(
-        default=None, description="0g:// URI of the seller's append-only history log."
-    )
     erc8004_reputation: Erc8004ReputationSnapshot
-    will_use_tee: bool = False
     signature: str
 
 
 class DeliveryPayload(BaseModel):
-    """Seller → buyer: the actual result plus TEE attestation material."""
+    """Seller → buyer: the actual result plus the hash committed on-chain."""
 
     rfq_id: str
     seller_agent_id: str
     content: dict[str, object]
     result_hash: str = Field(description="Hex keccak256 of canonical `content`.")
-    tee_signature: str | None = None
-    tee_provider: str | None = None
-    model_used: str | None = None
-    og_storage_tx_id: str | None = None
     signature: str

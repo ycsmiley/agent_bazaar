@@ -2,9 +2,7 @@
 
 Score formula (higher is better):
 
-    score = (confidence * success_rate * tee_bonus) / price_per_atomic
-
-    tee_bonus = 1.10 if the seller commits to 0G Compute TeeML, else 1.00
+    score = (confidence * success_rate) / price_per_atomic
 
 Ties are broken by faster `estimated_delivery_ms`. Quotes that violate the
 RFQ's `min_reputation_score` or `max_usdc_atomic` are filtered out before
@@ -34,17 +32,13 @@ def _violates_hard_constraints(rfq: RFQMessage, q: QuoteMessage) -> str | None:
             f"reputation {q.erc8004_reputation.success_rate:.3f} < "
             f"min {rfq.constraints.min_reputation_score:.3f}"
         )
-    if rfq.task.require_tee_proof and not q.will_use_tee:
-        return "RFQ requires TEE proof, quote does not commit to one"
     return None
 
 
 def score_quote(rfq: RFQMessage, q: QuoteMessage) -> float:
-    tee_bonus = 1.10 if q.will_use_tee else 1.00
     return (
         q.confidence_score
         * max(q.erc8004_reputation.success_rate, 0.01)
-        * tee_bonus
         / q.quote_price_atomic
     )
 

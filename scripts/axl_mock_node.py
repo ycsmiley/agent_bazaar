@@ -29,13 +29,15 @@ from collections import deque
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
 from urllib.parse import urlparse
-from urllib.request import urlopen, Request as URLRequest
+from urllib.request import Request as URLRequest
+from urllib.request import urlopen
 
 log = logging.getLogger("axl_node")
 
 
 def _make_peer_id(name: str) -> str:
     import hashlib
+
     return hashlib.sha256(name.encode()).hexdigest()
 
 

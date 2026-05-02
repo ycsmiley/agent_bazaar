@@ -90,7 +90,7 @@ contract AgentBazaarEscrow {
         emit FundsLocked(rfqId, msg.sender, seller, amount, token, deliveryDeadline);
     }
 
-    /// @notice Seller posts the delivery hash (IPFS / 0G Storage root).
+    /// @notice Seller posts the delivery hash for the canonical result payload.
     function confirmDelivery(bytes32 rfqId, bytes32 resultHash) external {
         Deal storage deal = _deals[rfqId];
         if (msg.sender != deal.seller) revert NotAuthorized();

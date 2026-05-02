@@ -41,7 +41,6 @@ def build_rfq(buyer_sk: SigningKey, buyer_addr: str) -> RFQMessage:
         task=Task(
             type=TaskType.DATA_FETCH,
             input={"pair": "ETH/USDC"},
-            require_tee_proof=True,
             output_schema={"type": "object"},
         ),
         budget=Budget(max_usdc_atomic=500_000, accepted_tokens=["USDC"]),
@@ -62,7 +61,6 @@ def build_quote(
     price: int,
     confidence: float,
     success_rate: float,
-    use_tee: bool,
 ) -> QuoteMessage:
     quote = QuoteMessage(
         rfq_id=rfq.rfq_id,
@@ -71,13 +69,11 @@ def build_quote(
         quote_price_atomic=price,
         confidence_score=confidence,
         estimated_delivery_ms=2800,
-        og_storage_history_ref=f"0g://kv/agentbazaar/{seller_addr}:history",
         erc8004_reputation=Erc8004ReputationSnapshot(
             total_tasks=47,
             success_rate=success_rate,
             on_chain_proof_uri=f"erc8004://reputation/{seller_addr}",
         ),
-        will_use_tee=use_tee,
         signature="",
     )
     body = quote.model_dump()
@@ -100,22 +96,22 @@ async def main() -> None:
     # 1. Buyer builds + broadcasts an RFQ.
     rfq = build_rfq(buyer_sk, buyer)
     console.print(f"[cyan]RFQ[/] {rfq.rfq_id[:8]} broadcast by {buyer[:10]} "
-                  f"(budget {rfq.budget.max_usdc_atomic}, TEE={rfq.task.require_tee_proof})")
+                  f"(budget {rfq.budget.max_usdc_atomic})")
 
     # 2. Two sellers quote.
     quote_a = build_quote(
         seller_a_sk, seller_a, rfq,
-        price=420_000, confidence=0.91, success_rate=0.957, use_tee=True,
+        price=420_000, confidence=0.91, success_rate=0.957,
     )
     quote_b = build_quote(
         seller_b_sk, seller_b, rfq,
-        price=300_000, confidence=0.85, success_rate=0.88, use_tee=False,
+        price=300_000, confidence=0.85, success_rate=0.88,
     )
     await asyncio.sleep(0.2)
     console.print(f"[yellow]Quote A[/] seller={seller_a[:10]} price={quote_a.quote_price_atomic} "
-                  f"tee={quote_a.will_use_tee}")
+                  f"rep={quote_a.erc8004_reputation.success_rate:.1%}")
     console.print(f"[yellow]Quote B[/] seller={seller_b[:10]} price={quote_b.quote_price_atomic} "
-                  f"tee={quote_b.will_use_tee}")
+                  f"rep={quote_b.erc8004_reputation.success_rate:.1%}")
 
     # 3. Buyer ranks and picks.
     ranked = rank_quotes(rfq, [quote_a, quote_b])
@@ -129,7 +125,7 @@ async def main() -> None:
     ))
     winner = ranked[0].quote
     console.print(f"[bold green]Winner[/]: {winner.seller_agent_id[:10]} "
-                  f"(TEE={winner.will_use_tee} beats cheaper non-TEE quote)")
+                  f"(reputation-weighted score beats cheaper quote)")
 
     # 4–8. Fake out the on-chain path with stub TxIDs.
     tx = {

@@ -70,6 +70,9 @@ PYTHONPATH=. python scripts/run_axl_demo.py
 PYTHONPATH=. python -m pytest tests/ -q
 ```
 
+For hackathon submission details, live/testnet setup, and sponsor mapping, see
+[`SUBMISSION.md`](SUBMISSION.md).
+
 ## Repo layout
 
 ```

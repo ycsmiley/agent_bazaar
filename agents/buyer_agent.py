@@ -76,7 +76,11 @@ class BuyerAgent:
         budget_atomic: int = 500_000,
         collection_window_secs: float = 10.0,
     ) -> dict[str, str]:
-        rfq = self._build_rfq(task_input=task_input, task_type=task_type, budget_atomic=budget_atomic)
+        rfq = self._build_rfq(
+            task_input=task_input,
+            task_type=task_type,
+            budget_atomic=budget_atomic,
+        )
         log.info("broadcasting RFQ %s", rfq.rfq_id)
         await self.axl.broadcast(rfq.model_dump())
 
@@ -103,14 +107,24 @@ class BuyerAgent:
 
     # ───── internals ───────────────────────────────────────────────────
 
-    def _build_rfq(self, *, task_input: dict[str, Any], task_type: TaskType, budget_atomic: int) -> RFQMessage:
+    def _build_rfq(
+        self,
+        *,
+        task_input: dict[str, Any],
+        task_type: TaskType,
+        budget_atomic: int,
+    ) -> RFQMessage:
         rfq = RFQMessage(
             rfq_id=str(uuid.uuid4()),
             buyer_agent_id=self.agent_id,
             buyer_axl_peer_id=self.verify_key_hex,
             task=Task(
                 type=task_type,
-                input={k: v for k, v in task_input.items() if isinstance(v, (str, int, float, bool))},
+                input={
+                    k: v
+                    for k, v in task_input.items()
+                    if isinstance(v, (str, int, float, bool))
+                },
                 output_schema={"type": "object"},
             ),
             budget=Budget(max_usdc_atomic=budget_atomic, accepted_tokens=[self.cfg.usdc_address]),
@@ -139,7 +153,7 @@ class BuyerAgent:
 
         try:
             await asyncio.wait_for(_consume(), timeout=window_secs)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
         return quotes
 

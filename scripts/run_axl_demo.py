@@ -23,7 +23,6 @@ import asyncio
 import json
 import logging
 import sys
-import threading
 import time
 import uuid
 from pathlib import Path
@@ -38,13 +37,13 @@ from rich.table import Table
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from agents.lib.signing import sign_payload, verify_payload
-from agents.lib.axl_client import AxlClient
-from schemas.quote import DeliveryPayload, Erc8004ReputationSnapshot, QuoteMessage
-from schemas.rfq import Budget, Constraints, RFQMessage, Task, TaskType
+from agents.lib.axl_client import AxlClient  # noqa: E402
+from agents.lib.signing import sign_payload  # noqa: E402
+from schemas.quote import DeliveryPayload, Erc8004ReputationSnapshot, QuoteMessage  # noqa: E402
+from schemas.rfq import Budget, Constraints, RFQMessage, Task, TaskType  # noqa: E402
 
 # Import the mock AXL node so we can boot nodes in-process
-from scripts.axl_mock_node import AXLNode
+from scripts.axl_mock_node import AXLNode  # noqa: E402
 
 console = Console()
 log = logging.getLogger(__name__)
@@ -70,7 +69,7 @@ async def _drain(axl: AxlClient, timeout: float) -> list[dict[str, Any]]:
             async for msg in axl.inbox():
                 msgs.append(msg)
         await asyncio.wait_for(_consume(), timeout=timeout)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         pass
     return msgs
 
@@ -104,13 +103,20 @@ async def run_buyer(
     _sign(body, buyer_sk)
     rfq_signed = RFQMessage.model_validate(body)
 
-    console.print(f"[cyan]→ RFQ[/] {rfq_signed.rfq_id[:8]}… broadcast (budget {rfq_signed.budget.max_usdc_atomic} USDC atomic)")
+    console.print(
+        f"[cyan]→ RFQ[/] {rfq_signed.rfq_id[:8]}… broadcast "
+        f"(budget {rfq_signed.budget.max_usdc_atomic} USDC atomic)"
+    )
     await axl.send(seller_peer_id, rfq_signed.model_dump())
 
     # 2. Collect quote
     await asyncio.sleep(0.2)
     quote_msgs = await _drain(axl, timeout=5.0)
-    quote_msgs = [m for m in quote_msgs if m.get("rfq_id") == rfq_signed.rfq_id and "quote_price_atomic" in m]
+    quote_msgs = [
+        m
+        for m in quote_msgs
+        if m.get("rfq_id") == rfq_signed.rfq_id and "quote_price_atomic" in m
+    ]
     if not quote_msgs:
         raise RuntimeError("no quote received from seller")
 
@@ -118,8 +124,7 @@ async def run_buyer(
     console.print(
         f"[yellow]← Quote[/] from {quote.seller_agent_id[:12]}  "
         f"price={quote.quote_price_atomic}  "
-        f"rep={quote.erc8004_reputation.success_rate:.1%}  "
-        f"tee={quote.will_use_tee}"
+        f"rep={quote.erc8004_reputation.success_rate:.1%}"
     )
 
     # Stub Uniswap swap + KeeperHub lock
@@ -141,7 +146,11 @@ async def run_buyer(
     # 4. Await delivery
     await asyncio.sleep(0.3)
     delivery_msgs = await _drain(axl, timeout=6.0)
-    delivery_msgs = [m for m in delivery_msgs if m.get("rfq_id") == rfq_signed.rfq_id and "result_hash" in m]
+    delivery_msgs = [
+        m
+        for m in delivery_msgs
+        if m.get("rfq_id") == rfq_signed.rfq_id and "result_hash" in m
+    ]
     if not delivery_msgs:
         raise RuntimeError("no delivery received")
 
@@ -204,7 +213,6 @@ async def run_seller(
                     success_rate=0.957,
                     on_chain_proof_uri=f"erc8004://reputation/{seller_addr}",
                 ),
-                will_use_tee=False,
                 signature="",
             )
             q_dict = quote.model_dump()

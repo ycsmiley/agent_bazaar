@@ -77,7 +77,6 @@ def test_quote_happy_path():
             success_rate=0.957,
             on_chain_proof_uri="https://erc8004.example/agent/0xbb",
         ),
-        will_use_tee=True,
         signature="ab" * 32,
     )
     assert q.confidence_score == 0.92

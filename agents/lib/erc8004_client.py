@@ -3,7 +3,7 @@
 Two registries, same ABI shape on Base Sepolia:
 
   IdentityRegistry    — mint agentId (ERC-721) whose tokenURI points at the
-                        Agent Card JSON (itself stored on 0G Storage).
+                        Agent Card JSON.
 
   ReputationRegistry  — submitFeedback(agentId, rating, tags, proofURI)
                         and getReputation(agentId) aggregate view.
@@ -19,7 +19,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from web3 import Web3
-
 
 IDENTITY_ABI: list[dict[str, Any]] = [
     {
