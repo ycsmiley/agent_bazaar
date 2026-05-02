@@ -2,7 +2,7 @@
 
 **Decentralized spot market protocol for AI agents — closing the x402 trust gap.**
 
-Targeting hackathon tracks: **Gensyn AXL · KeeperHub · Uniswap · 0G Track B**
+Targeting hackathon tracks: **Gensyn AXL · KeeperHub · Uniswap**
 
 ---
 
@@ -12,37 +12,32 @@ AgentBazaar is a decentralized spot-market protocol for agent-to-agent commerce.
 
 ## 2. Problem
 
-The agent economy (projected >$600M in 2026) suffers from three structural defects:
+The agent economy suffers from three structural defects:
 
 1. **Pay-then-deliver trust cliff** — x402 is final and non-refundable; no recourse against fraud or hallucination.
 2. **No dynamic negotiation layer** — existing protocols only support fixed price / subscriptions.
 3. **No portable agent reputation** — ERC-8004 is live, but agent history is fragmented across centralized platforms.
 
-## 3. Four-Layer Architecture
+## 3. Three-Layer Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  Layer 4: Memory & Verifiable Inference                      │
-│  Powered by: 0G Storage + 0G Compute                         │
-│  Agent capability registry, transaction history, TeeML proofs│
-└──────────────────────────────────────────────────────────────┘
-                            ↓
-┌──────────────────────────────────────────────────────────────┐
 │  Layer 3: Discovery & Negotiation                            │
 │  Powered by: Gensyn AXL                                      │
-│  Encrypted P2P RFQ broadcast + quote return                  │
+│  Encrypted P2P RFQ broadcast + signed quote return           │
 └──────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────┐
 │  Layer 2: Identity & Reputation                              │
 │  Powered by: ERC-8004                                        │
 │  On-chain agent ID + portable reputation score               │
+│  Reputation-weighted matching: score = confidence × rep / price│
 └──────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────┐
 │  Layer 1: Execution & Settlement                             │
 │  Powered by: KeeperHub Workflow + Uniswap + Escrow contract  │
-│  Funds locking, conditional release, multi-token bridge      │
+│  WETH→USDC swap · lock · confirmDelivery · optimisticRelease │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -56,63 +51,117 @@ The agent economy (projected >$600M in 2026) suffers from three structural defec
 | NEAR AgentMarket | ❌            | ✅     | ❌       | ❌         | ⚠️              |
 | PayCrow          | ❌            | ✅     | ❌       | ✅         | ❌              |
 
-One-liner: **the only protocol that combines decentralized discovery + escrow + ERC-8004 identity + EVM-native + dynamic pricing.**
+One-liner: **the only protocol that combines decentralized P2P discovery + escrow + ERC-8004 reputation + EVM-native + dynamic pricing.**
 
-## 5. Repository Layout
+## 5. Quick Start
+
+```bash
+# 1. Install
+pip install -e '.[dev]'
+
+# 2. Start local Anvil chain (separate terminal)
+anvil
+
+# 3. Deploy contracts
+bash scripts/deploy_contracts.sh
+
+# 4. Run in-process demo (no sponsor APIs needed)
+PYTHONPATH=. python scripts/run_demo.py
+
+# 5. Run AXL P2P demo (exercises real Gensyn AXL transport layer)
+PYTHONPATH=. python scripts/run_axl_demo.py
+
+# 6. Run tests (35 passing)
+PYTHONPATH=. python -m pytest tests/ -q
+```
+
+## 6. Repository Layout
 
 ```
 agentbazaar/
-├── contracts/                # Solidity: Escrow + iNFT (ERC-7857)
-│   └── test/
-├── agents/                   # Python: buyer + seller agents
+├── contracts/
+│   ├── AgentBazaarEscrow.sol   # State machine: OPEN→LOCKED→DELIVERED→RELEASED
+│   ├── MockUSDC.sol            # Mintable ERC-20 for local dev
+│   └── test/AgentBazaarEscrow.t.sol   # 7 Foundry tests
+├── agents/
+│   ├── buyer_agent.py          # RFQ → collect quotes → swap → lock → verify
+│   ├── seller_agent.py         # Receive RFQ → quote → execute → deliver
 │   └── lib/
-│       ├── axl_client.py
-│       ├── keeperhub_client.py
-│       ├── uniswap_client.py
-│       ├── og_storage_client.py
-│       ├── og_compute_client.py
-│       └── erc8004_client.py
-├── schemas/                  # Pydantic schemas for RFQ / Quote / Delivery
-├── scripts/                  # deploy + demo runners
-└── demo/                     # 3-minute demo video
+│       ├── axl_client.py       # Gensyn AXL HTTP transport
+│       ├── keeperhub_client.py # KeeperHub lock/release/refund workflows
+│       ├── uniswap_client.py   # Uniswap Trade API (WETH→USDC on Base)
+│       ├── erc8004_client.py   # ERC-8004 identity + reputation registry
+│       ├── matching.py         # Reputation-weighted quote selection
+│       ├── signing.py          # Ed25519 canonical JSON signing
+│       └── threat_defense.py   # Replay guard, schema hardening
+├── schemas/
+│   ├── rfq.py                  # RFQMessage (Pydantic v2, signed)
+│   └── quote.py                # QuoteMessage + DeliveryPayload (signed)
+├── scripts/
+│   ├── run_demo.py             # In-process demo (all paths stubbed)
+│   ├── run_axl_demo.py         # Full AXL P2P integration demo
+│   ├── axl_mock_node.py        # Mock AXL node (topology/send/recv)
+│   ├── deploy_contracts.sh     # Foundry deploy to Anvil
+│   └── start_axl_nodes.sh      # Start buyer+seller AXL nodes
+├── FEEDBACK.md                 # Uniswap mandatory feedback
+└── KEEPERHUB_FEEDBACK.md       # KeeperHub feedback bounty
 ```
 
-## 6. Sponsor Track Mapping
+## 7. Sponsor Track Mapping
 
-| Track              | Prize   | How AgentBazaar Qualifies                                                                 |
-|--------------------|---------|-------------------------------------------------------------------------------------------|
-| Gensyn AXL         | $5,000  | RFQ broadcast + encrypted quote return run entirely over AXL — removing it kills discovery|
-| KeeperHub          | $5,500  | Three on-chain workflows (lock / optimistic-release / timeout-refund) with retry + audit  |
-| Uniswap            | $5,000  | ETH→USDC pre-lock swap + seller preferred-token post-release swap, with real TxIDs        |
-| 0G Track B         | $7,500  | Buyer/seller agent swarm with 0G Storage persistent memory + 0G Compute TeeML proofs       |
+| Track      | Prize   | Integration                                                                       |
+|------------|---------|-----------------------------------------------------------------------------------|
+| Gensyn AXL | $5,000  | All buyer↔seller messages travel over AXL (`axl_client.py` + `axl_mock_node.py`) |
+| KeeperHub  | $5,500  | Three on-chain workflows: `lock` / `optimistic-release` / `timeout-refund`        |
+| Uniswap    | $5,000  | WETH→USDC swap via Trade API before every escrow lock (`uniswap_client.py`)       |
 
-**Total prize pool targeted: $22,500** · Conservative take: $4,500–$8,000.
+**Total prize pool targeted: $15,500**
 
-## 7. Build Timeline (10 days, solo)
+## 8. On-Chain Trade Flow
 
-| Day | Goal                            | Output                                       |
-|-----|---------------------------------|----------------------------------------------|
-| 1   | Environment + scaffolding       | Repo layout, deps, `.env.example`            |
-| 2   | Escrow contract                 | `AgentBazaarEscrow.sol` + tests + deployment |
-| 3   | AXL transport                   | RFQ broadcast + Quote return working          |
-| 4   | KeeperHub workflows             | Lock + Release workflow with live TxIDs      |
-| 5   | Uniswap integration             | ETH→USDC swap TxID                            |
-| 6   | 0G Storage                      | Capabilities + history read/write            |
-| 7   | ERC-8004 + matching algorithm   | Reputation-weighted quote selection          |
-| 8   | 0G Compute                      | TeeML sealed-inference + verification        |
-| 9   | iNFT + defence hardening        | ERC-7857 mint + schema validation hardened   |
-| 10  | Delivery                        | Demo video, README, FEEDBACK.md              |
+```
+Buyer                     AXL                    Seller
+  │                        │                        │
+  │── broadcast RFQ ──────►│──────────────────────►│
+  │                        │         ◄── Quote ─────│
+  │   select_best()        │                        │
+  │── Uniswap WETH→USDC ──►│  (TxID #1)             │
+  │── KeeperHub lockFunds ►│  (TxID #2)             │
+  │── "locked" trigger ───►│──────────────────────►│
+  │                        │    run task + hash     │
+  │                        │    confirmDelivery ─────│── (TxID #3)
+  │                        │◄── DeliveryPayload ────│
+  │   verify hash          │                        │
+  │── KeeperHub release ──►│  (TxID #4)             │
+  │── ERC-8004 feedback ──►│  (TxID #5)             │
+```
 
-Hard floor: Days 1–5. Days 6–8 are scoring multipliers. Day 9 is a bonus.
+## 9. Running the AXL Demo
 
-## 8. Visible TxIDs During Demo
+```
+$ PYTHONPATH=. python scripts/run_axl_demo.py
 
-1. Uniswap ETH→USDC swap
-2. `escrow.lockFunds()`
-3. `escrow.confirmDelivery()`
-4. `escrow.releaseFunds()` (or `optimisticRelease()` via KeeperHub)
-5. `erc8004.submitFeedback()`
+╭────────────────────────────────────────╮
+│ AgentBazaar — AXL P2P Integration Demo │
+╰─ Gensyn AXL transport · Uniswap swap ·─╯
+
+→ RFQ efc618a7… broadcast (budget 500000 USDC atomic)
+Seller received RFQ efc618a7…
+Seller → Quote sent (price=420000)
+← Quote from 0x5e5e5e5e5e  price=420000  rep=95.7%  tee=False
+  Uniswap swap tx : 0x1111111111111111…
+  Escrow lock tx  : 0x2222222222222222…
+→ Locked trigger sent to seller
+Seller received locked trigger for rfq=efc618a7…
+  confirmDelivery : 0x3333333333333333…
+Seller → DeliveryPayload sent hash=0x9cece92d…
+← Delivery result_hash=0x9cece92d…  content keys=[…]
+  Escrow release  : 0x4444444444444444…
+  ERC-8004 feedback: 0x5555555555555555…
+
+✓ Trade complete — RFQ → Quote → Lock → Deliver → Release
+```
 
 ---
 
-**Status:** 🚧 In active development for hackathon submission.
+**Status:** ✅ All tracks implemented · 35 tests passing · Two runnable demos

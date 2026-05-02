@@ -49,7 +49,7 @@ class ReplayGuard:
         return True
 
     def _evict(self, now: int) -> None:
-        stale = [k for k, t in self._seen.items() if now - t > self._ttl]
+        stale = [k for k, t in self._seen.items() if now - t >= self._ttl]
         for k in stale:
             del self._seen[k]
 
