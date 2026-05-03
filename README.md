@@ -82,6 +82,7 @@ open demo/market-trace.html
 PYTHONPATH=. python scripts/serve_trade_playback.py
 
 # Gensyn AXL P2P demo (real AXL nodes from .env)
+bash scripts/start_gensyn_axl_nodes.sh
 PYTHONPATH=. python scripts/run_axl_demo.py --external
 
 # local AXL replay (spins up mock nodes)

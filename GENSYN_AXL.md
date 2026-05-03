@@ -32,6 +32,12 @@ BUYER_AXL_PEER_ID=<buyer node our_public_key>
 SELLER_AXL_PEER_ID=<seller node our_public_key>
 ```
 
+This repo includes a helper for the local two-node setup:
+
+```bash
+bash scripts/start_gensyn_axl_nodes.sh
+```
+
 Check each node:
 
 ```bash
