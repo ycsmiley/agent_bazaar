@@ -407,6 +407,46 @@
       padding-right: 3px;
     }
 
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .catalog {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .catalog-card {
+      min-height: 132px;
+      padding: 14px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .catalog-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .catalog-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .catalog-card .badge {
+      margin-top: 12px;
+    }
+
     .event {
       display: grid;
       grid-template-columns: 50px 1fr;
@@ -429,7 +469,8 @@
 
     @media (max-width: 1120px) {
       .rfq-bar,
-      .workspace {
+      .workspace,
+      .catalog {
         grid-template-columns: 1fr;
       }
 
@@ -497,99 +538,113 @@
       </div>
     </div>
     <nav class="tabs" aria-label="Workspace tabs">
-      <button class="active">Market</button>
-      <button>RFQs</button>
-      <button>Agents</button>
-      <button>Settlement</button>
+      <button class="active" data-view-button="market">Market</button>
+      <button data-view-button="rfqs">RFQs</button>
+      <button data-view-button="agents">Agents</button>
+      <button data-view-button="settlement">Settlement</button>
     </nav>
     <span class="badge blue" id="source-badge">loading</span>
   </header>
 
   <main>
-    <form class="rfq-bar" id="rfq-form">
-      <label>
-        Task
-        <input id="prompt" value="Fetch spot price and 24h volume.">
-      </label>
-      <label>
-        Market
-        <input id="pair" value="ETH/USDC">
-      </label>
-      <label>
-        Max budget
-        <input id="budget" value="0.50 USDC">
-      </label>
-      <button class="primary" type="submit">Broadcast RFQ</button>
-    </form>
+    <section class="view active" data-view="market">
+      <form class="rfq-bar" id="rfq-form">
+        <label>
+          Task
+          <input id="prompt" value="Fetch spot price and 24h volume.">
+        </label>
+        <label>
+          Market
+          <input id="pair" value="ETH/USDC">
+        </label>
+        <label>
+          Max budget
+          <input id="budget" value="0.50 USDC">
+        </label>
+        <button class="primary" type="submit">Broadcast RFQ</button>
+      </form>
 
-    <section class="stats" aria-label="Market stats">
-      <div class="stat"><span>Active RFQs</span><strong id="active-rfqs">0</strong></div>
-      <div class="stat"><span>Seller agents</span><strong>18</strong></div>
-      <div class="stat"><span>Quotes / min</span><strong id="quotes-min">0</strong></div>
-      <div class="stat"><span>Settled today</span><strong id="settled-count">0</strong></div>
-      <div class="stat"><span>Avg verify</span><strong>8s</strong></div>
-    </section>
-
-    <div class="workspace">
-      <section class="panel" aria-labelledby="trades-title">
-        <div class="panel-head">
-          <h2 id="trades-title">Active trades</h2>
-          <span class="badge green">updating</span>
-        </div>
-        <div class="panel-body">
-          <table class="trade-table">
-            <thead>
-              <tr>
-                <th>Task</th>
-                <th>Buyer</th>
-                <th>Quotes</th>
-                <th>Budget</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="trade-list"></tbody>
-          </table>
-        </div>
+      <section class="stats" aria-label="Market stats">
+        <div class="stat"><span>Active RFQs</span><strong id="active-rfqs">0</strong></div>
+        <div class="stat"><span>Seller agents</span><strong>18</strong></div>
+        <div class="stat"><span>Quotes / min</span><strong id="quotes-min">0</strong></div>
+        <div class="stat"><span>Settled today</span><strong id="settled-count">0</strong></div>
+        <div class="stat"><span>Avg verify</span><strong>8s</strong></div>
       </section>
 
-      <aside class="side">
-        <section class="panel" aria-labelledby="selected-title">
+      <div class="workspace">
+        <section class="panel" aria-labelledby="trades-title">
           <div class="panel-head">
-            <h2 id="selected-title">Selected RFQ</h2>
-            <span class="badge gold" id="selected-status">matching</span>
+            <h2 id="trades-title">Active trades</h2>
+            <span class="badge green">updating</span>
           </div>
           <div class="panel-body">
-            <div class="selected-card">
-              <div>
-                <strong id="selected-task">-</strong>
-                <p id="selected-meta">-</p>
-              </div>
-              <span class="badge green" id="winner-name">winner</span>
+            <table class="trade-table">
+              <thead>
+                <tr>
+                  <th>Task</th>
+                  <th>Buyer</th>
+                  <th>Quotes</th>
+                  <th>Budget</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="trade-list"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="side">
+          <section class="panel" aria-labelledby="selected-title">
+            <div class="panel-head">
+              <h2 id="selected-title">Selected RFQ</h2>
+              <span class="badge gold" id="selected-status">matching</span>
             </div>
-          </div>
-        </section>
+            <div class="panel-body">
+              <div class="selected-card">
+                <div>
+                  <strong id="selected-task">-</strong>
+                  <p id="selected-meta">-</p>
+                </div>
+                <span class="badge green" id="winner-name">winner</span>
+              </div>
+            </div>
+          </section>
 
-        <section class="panel" aria-labelledby="quotes-title">
-          <div class="panel-head">
-            <h2 id="quotes-title">Quote ranking</h2>
-            <span class="badge gray" id="formula">matching</span>
-          </div>
-          <div class="panel-body">
-            <div class="quote-list" id="quotes"></div>
-          </div>
-        </section>
+          <section class="panel" aria-labelledby="quotes-title">
+            <div class="panel-head">
+              <h2 id="quotes-title">Quote ranking</h2>
+              <span class="badge gray" id="formula">matching</span>
+            </div>
+            <div class="panel-body">
+              <div class="quote-list" id="quotes"></div>
+            </div>
+          </section>
 
-        <section class="panel" aria-labelledby="feed-title">
-          <div class="panel-head">
-            <h2 id="feed-title">Market activity</h2>
-            <span class="badge blue">live</span>
-          </div>
-          <div class="panel-body">
-            <div class="feed" id="feed"></div>
-          </div>
-        </section>
-      </aside>
-    </div>
+          <section class="panel" aria-labelledby="feed-title">
+            <div class="panel-head">
+              <h2 id="feed-title">Market activity</h2>
+              <span class="badge blue">live</span>
+            </div>
+            <div class="panel-body">
+              <div class="feed" id="feed"></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+
+    <section class="view" data-view="rfqs">
+      <div class="catalog" id="rfq-catalog"></div>
+    </section>
+
+    <section class="view" data-view="agents">
+      <div class="catalog" id="agent-catalog"></div>
+    </section>
+
+    <section class="view" data-view="settlement">
+      <div class="catalog" id="settlement-catalog"></div>
+    </section>
   </main>
 
   <script>
@@ -598,6 +653,7 @@
     let trace = fallbackTrace;
     let selectedTradeId = "rfq-eth-spot";
     let tick = 0;
+    let activeView = "market";
 
     const baseTrades = [
       { id: "rfq-eth-spot", buyer: "Research Buyer", task: "ETH/USDC market data", quotes: 3, status: "settling", budget: "$0.50" },
@@ -678,6 +734,7 @@
       renderTrades();
       renderQuotes();
       renderSelected();
+      renderCatalogs();
       renderLiveParts();
     }
 
@@ -780,7 +837,66 @@
       return "gray";
     }
 
+    function switchView(view) {
+      activeView = view;
+      document.querySelectorAll("[data-view]").forEach((node) => {
+        node.classList.toggle("active", node.dataset.view === view);
+      });
+      document.querySelectorAll("[data-view-button]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.viewButton === view);
+      });
+      renderCatalogs();
+    }
+
+    function renderCatalogs() {
+      const rfqRoot = document.querySelector("#rfq-catalog");
+      const agentRoot = document.querySelector("#agent-catalog");
+      const settlementRoot = document.querySelector("#settlement-catalog");
+      if (!rfqRoot || !agentRoot || !settlementRoot) return;
+
+      rfqRoot.innerHTML = baseTrades.map((trade) => `
+        <article class="catalog-card">
+          <strong>${trade.task}</strong>
+          <p>${trade.buyer} · ${trade.quotes} quotes · ${trade.budget}</p>
+          <span class="badge ${statusClass(trade.status)}">${trade.status}</span>
+        </article>
+      `).join("");
+
+      agentRoot.innerHTML = [
+        ["Efficient Price Agent", "Best current score on ETH/USDC data tasks.", "0.88 reputation"],
+        ["Fast Data Agent", "Higher reputation, higher price, fast delivery.", "0.96 reputation"],
+        ["Specialist Agent", "Wins domain-specific RFQs like risk and code review.", "0.94 reputation"],
+        ["Budget Agent", "Cheaper quote source for low-stakes work.", "0.81 reputation"],
+        ["New Agent", "Often rejected until reputation improves.", "0.64 reputation"],
+        ["Signal Agent", "Monitors market and news RFQs.", "0.90 reputation"],
+      ].map(([name, desc, badge]) => `
+        <article class="catalog-card">
+          <strong>${name}</strong>
+          <p>${desc}</p>
+          <span class="badge blue">${badge}</span>
+        </article>
+      `).join("");
+
+      settlementRoot.innerHTML = [
+        ["Lock funds", "KeeperHub locks payment for the selected seller.", "automated"],
+        ["Confirm delivery", "Seller commits result hash after completing the task.", "verified"],
+        ["Release payment", "Buyer or KeeperHub releases after verification window.", "settled"],
+        ["Refund timeout", "If seller never delivers, claimRefund returns buyer funds.", "fallback"],
+        ["Reputation update", "Buyer feedback changes future matching score.", "ERC-8004"],
+        ["Quote proof", "Uniswap route proof is recorded separately from escrow settlement.", "quote"],
+      ].map(([name, desc, badge]) => `
+        <article class="catalog-card">
+          <strong>${name}</strong>
+          <p>${desc}</p>
+          <span class="badge green">${badge}</span>
+        </article>
+      `).join("");
+    }
+
     document.querySelector("#rfq-form").addEventListener("submit", createRfq);
+    document.querySelectorAll("[data-view-button]").forEach((button) => {
+      button.addEventListener("click", () => switchView(button.dataset.viewButton));
+    });
     loadMarket();
   </script>
 </body>

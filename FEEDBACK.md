@@ -4,33 +4,76 @@ _Required submission artefact for the Uniswap hackathon track._
 
 ## What we built with it
 
-AgentBazaar uses the Uniswap Trade API as its **multi-token payment bridge**. Two flows:
+Agent Bazaar uses the Uniswap Trade API as a **real quote and approval proof**
+for payment-denomination flexibility. The escrow demo settles in Base Sepolia
+MockUSDC, so we intentionally do not claim a Uniswap swap transaction for the
+escrow path.
 
-1. **Pre-lock swap** — the buyer agent frequently holds ETH (or another base token) but our escrow only accepts USDC. Before firing the KeeperHub `lock` workflow, the buyer calls `UniswapClient.bridge_to_usdc`, which runs `/check_approval → /quote → /swap`. The returned `transactionHash` is the TxID bound into the rest of the deal.
-2. **Post-release swap** — sellers declare a `preferred_token` in their ERC-8004 agent card. If it's not USDC, the KeeperHub release workflow chains a second `UniswapClient.bridge_from_usdc` call after `optimisticRelease`, so the seller ends up with DAI (or whatever) without touching USDC.
+Current live-tested flow:
 
-Both paths live in [`agents/lib/uniswap_client.py`](agents/lib/uniswap_client.py:1) and are wired from the buyer/seller agents.
+1. **Approval check** — `UniswapClient.check_approval()` calls
+   `/check_approval` for the configured wallet, input token, output token, and
+   chain.
+2. **Quote proof** — `UniswapClient.quote()` calls `/quote` for native ETH →
+   USDC on Base mainnet and returns the quote id, route, token amounts, and
+   approval requirement.
+3. **Agent settlement handoff** — the buyer agent records the quote id as the
+   payment-route proof, then locks the escrow through KeeperHub using the
+   configured settlement token.
+
+The integration lives in [`agents/lib/uniswap_client.py`](agents/lib/uniswap_client.py:1)
+and the live proof script is [`scripts/test_uniswap_quote.py`](scripts/test_uniswap_quote.py:1).
+
+## What we actually tested
+
+- `POST /quote` against Base mainnet (`8453`) for native ETH → USDC.
+- Quote id returned: `52cdda69-9996-4b58-9101-d1451f44d8f0`.
+- Route returned through V3 pool `0xb4CB800910B228ED3d0834cF79D697127BBB00e5`.
+- Base Sepolia MockUSDC escrow settlement stayed separate because testnet MockUSDC is not a Uniswap liquidity route.
+
+## Issues we hit during integration
+
+- **No route for testnet MockUSDC.** Trying to quote against the escrow token on Base Sepolia returned no available route, which is expected but easy to mistake for a broken API key.
+- **Mainnet/testnet split.** For an honest demo, we separated "real quote proof on Base mainnet" from "escrow settlement on Base Sepolia MockUSDC" instead of pretending there was a swap tx.
+- **API key confusion.** It is easy to think the API key is only needed for swap execution, but quote/check endpoints also need the configured key in our client.
 
 ## What worked well
 
-- **Permit2 approval check** in a single call is a huge ergonomic win. We only bother the buyer for an approval tx when `check_approval.approval != null`, so a warm wallet goes quote→swap in two round-trips.
-- **EXACT_INPUT quotes** mean we can size the ETH→USDC swap to exactly the escrow lock amount plus a small buffer, instead of having to solve the inverse.
-- **Real TxID on `/swap`** — no intermediate tx-relay step. This matters for our demo because we list five visible TxIDs and Uniswap provides the first one.
+- **Permit2 approval visibility** is useful for autonomous agents. The agent can
+  know whether a wallet needs approval before trying to execute a route.
+- **Quote response structure** gives enough route detail to explain the payment
+  path to a human judge without pretending settlement already happened.
+- **Chain/token configuration** is easy to parameterize. We can keep the
+  hackathon escrow on Base Sepolia while showing a real Base quote where
+  production liquidity exists.
 
 ## Friction / suggestions
 
-1. **Quote ID vs. route reuse.** When the quote is older than ~15s by the time the wallet signs the Permit2, we occasionally get a stale-price revert on `/swap`. A flag like `allowPriceDriftBps` or a server-side auto-requote when the drift is under slippage tolerance would smooth this out for agent flows that incur a signing round-trip.
-2. **Gas fee field units.** `gasFee` comes back as a string of wei, but the surrounding `amount` fields are sometimes the input-token atomic unit and sometimes wei. Normalising this (or tagging each with `currency`) would prevent accidental unit mixing in agent code.
-3. **Batching across chains.** Our sellers occasionally want USDC on Base but the release happens on a different EVM. Right now we handle this ourselves. A `chainId` pair on `/quote` with a bridging route would let us drop ~100 LoC.
-4. **MCP wrapper.** We built our own async wrapper because the Python SDK is thin. A first-class MCP server exposing `quote` / `swap` / `check_approval` directly would let us skip the HTTP layer entirely and chain into KeeperHub workflows natively.
+1. **Testnet quote availability.** Base Sepolia MockUSDC is perfect for escrow
+   demos, but quotes against arbitrary testnet tokens return no route. A small
+   documented sandbox token set with guaranteed liquidity would help hackathon
+   builders test end-to-end without jumping between testnet settlement and
+   mainnet quote proofs.
+2. **Quote-only examples for agents.** Most docs naturally optimize for users
+   who will swap immediately. Agent apps often need a quote as a decision input
+   before a different system executes settlement. More examples for quote-only
+   planning flows would be helpful.
+3. **Clear units in responses.** Gas and amount fields are machine-readable but
+   easy to mix up in agent code. Returning explicit unit/currency metadata next
+   to every numeric field would reduce errors.
+4. **MCP wrapper.** A first-class MCP server exposing `quote`,
+   `check_approval`, and route explanation would let agent frameworks compose
+   Uniswap directly with other tools like KeeperHub.
 
 ## Scorecard
 
-| Dimension         | Rating |
-|-------------------|--------|
-| Docs quality      | 8/10   |
-| API stability     | 9/10   |
-| Time to first TxID| 10/10  |
-| Agent-friendliness| 7/10   |
+| Dimension          | Rating |
+|--------------------|--------|
+| Docs quality       | 8/10   |
+| API stability      | 9/10   |
+| Quote ergonomics   | 9/10   |
+| Agent-friendliness | 7/10   |
 
-Overall the Trade API was the least-painful sponsor integration in this submission. Shipping ETH→USDC→lock in a single afternoon is exactly the kind of velocity that lets an agent protocol compose at the settlement layer.
+Overall, the Trade API was useful as a real route/approval oracle for an
+agent-to-agent market. We kept the integration honest: quote proof is real,
+escrow settlement is separate, and the demo does not invent a swap tx.

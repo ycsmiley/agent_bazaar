@@ -6,7 +6,7 @@ Three workflows drive every settlement path. They are defined once on the Keeper
 
 ## 1. `lock` — Buyer locks funds on escrow
 
-**Trigger:** Webhook, fired by the buyer agent after it has selected a winning quote and (if needed) completed the Uniswap pre-swap into USDC.
+**Trigger:** Webhook, fired by the buyer agent after it has selected a winning quote.
 
 **Inputs:**
 ```json

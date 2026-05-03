@@ -60,7 +60,12 @@ class BuyerAgent:
         self.signing_key = signing_key
         self.verify_key_hex = signing_key.verify_key.encode().hex()
 
-        self.axl = AxlClient(cfg.axl_endpoint, peer_id=self.verify_key_hex)
+        self.axl_peer_id = cfg.axl_peer_id or self.verify_key_hex
+        self.axl = AxlClient(
+            cfg.axl_endpoint,
+            peer_id=self.axl_peer_id,
+            api_mode=cfg.axl_transport,
+        )
         self.uniswap = UniswapClient(cfg.uniswap_api_base, cfg.uniswap_api_key)
         self.keeperhub = KeeperHubClient(cfg.keeperhub_endpoint, cfg.keeperhub_api_key)
 
@@ -127,7 +132,7 @@ class BuyerAgent:
         rfq = RFQMessage(
             rfq_id=_new_rfq_id(),
             buyer_agent_id=self.agent_id,
-            buyer_axl_peer_id=self.verify_key_hex,
+            buyer_axl_peer_id=self.axl_peer_id,
             task=Task(
                 type=task_type,
                 input={

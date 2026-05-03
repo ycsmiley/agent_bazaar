@@ -57,7 +57,12 @@ class SellerAgent:
         self.verify_key_hex = signing_key.verify_key.encode().hex()
         self.capabilities = capabilities
 
-        self.axl = AxlClient(cfg.axl_endpoint, peer_id=self.verify_key_hex)
+        self.axl_peer_id = cfg.axl_peer_id or self.verify_key_hex
+        self.axl = AxlClient(
+            cfg.axl_endpoint,
+            peer_id=self.axl_peer_id,
+            api_mode=cfg.axl_transport,
+        )
 
         w3 = Web3(Web3.HTTPProvider(cfg.rpc_url))
         self.escrow = EscrowClient(
@@ -107,7 +112,7 @@ class SellerAgent:
         quote = QuoteMessage(
             rfq_id=rfq.rfq_id,
             seller_agent_id=self.agent_id,
-            seller_axl_peer_id=self.verify_key_hex,
+                seller_axl_peer_id=self.axl_peer_id,
             quote_price_atomic=min(rfq.budget.max_usdc_atomic, 420_000),
             confidence_score=0.91,
             estimated_delivery_ms=2800,

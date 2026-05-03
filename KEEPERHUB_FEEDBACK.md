@@ -4,7 +4,7 @@ _Submission artefact for the KeeperHub feedback bounty ($250 base) + merge-quali
 
 ## What we built with it
 
-AgentBazaar uses KeeperHub to remove the two weakest links in an agent-to-agent trade:
+Agent Bazaar uses KeeperHub to remove the two weakest links in an agent-to-agent trade:
 
 1. **Buyer stays offline after locking funds.** The `optimistic-release` workflow watches every deal that transitioned to `DELIVERED` and fires `escrow.optimisticRelease(rfqId)` once the dispute window closes. The buyer agent can crash, disconnect, or have its AXL node rebooted — the seller still gets paid.
 2. **Seller never shows up.** The `timeout-refund` workflow watches every `LOCKED` deal and fires `escrow.claimRefund(rfqId)` once the delivery deadline passes. Buyers get their USDC back without having to remember to come claim it.
@@ -12,6 +12,22 @@ AgentBazaar uses KeeperHub to remove the two weakest links in an agent-to-agent 
 Plus the on-ramp workflow `lock`, which the buyer agent fires via webhook after picking the winning quote. Gas-retry + idempotency-key on `rfq_id` means a flaky webhook retry can never double-lock.
 
 See [`keeperhub/workflows.md`](keeperhub/workflows.md) for the full per-workflow spec and [`agents/lib/keeperhub_client.py`](agents/lib/keeperhub_client.py:1) for the client that talks to the MCP endpoint.
+
+## What we actually configured and tested
+
+- `lockFunds(bytes32,address,uint256,address,uint64,uint64)` via KeeperHub webhook.
+- `optimisticRelease(bytes32)` via KeeperHub workflow after delivery/dispute window.
+- `claimRefund(bytes32)` via KeeperHub workflow after delivery timeout.
+- Manual ABI import was required because the deployed Base Sepolia contract was not verified when the workflow was configured.
+- Dynamic webhook inputs worked after switching fields to `Webhook.data.rfqId`, `Webhook.data.seller`, `Webhook.data.amount`, `Webhook.data.token`, `Webhook.data.deliveryWindowSecs`, and `Webhook.data.disputeWindowSecs`.
+- Live test runs covered `LOCKED`, `RELEASED`, and `REFUNDED` escrow states.
+
+## Issues we hit during integration
+
+- **Manual ABI step.** KeeperHub could not auto-detect functions from Etherscan before verification, so we had to paste ABI manually.
+- **Input typing was easy to misread.** Address fields and bytes32 fields look similar in the UI. We initially hit errors when a field was filled as a literal placeholder instead of a dynamic `Webhook.data.*` value.
+- **Deadline logic is strict.** Calling release before the dispute window ends correctly reverts with `DeadlineNotPassed`; this is right protocol behavior, but it needs to be obvious in workflow setup.
+- **Allowance happens outside KeeperHub.** The KeeperHub wallet must approve the escrow contract for MockUSDC before lock workflows can succeed.
 
 ## What worked well
 

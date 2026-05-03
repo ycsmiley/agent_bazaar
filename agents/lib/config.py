@@ -27,6 +27,8 @@ class Config:
     erc8004_reputation: str
     # AXL
     axl_endpoint: str
+    axl_transport: str
+    axl_peer_id: str
     # KeeperHub
     keeperhub_endpoint: str
     keeperhub_api_key: str
@@ -70,6 +72,7 @@ def load_config(
     axl_endpoint_key = (
         "BUYER_AXL_ENDPOINT" if role == "buyer" else "SELLER_AXL_ENDPOINT"
     )
+    axl_peer_id_key = "BUYER_AXL_PEER_ID" if role == "buyer" else "SELLER_AXL_PEER_ID"
 
     return Config(
         chain_id=int(_get("CHAIN_ID", "84532")),
@@ -79,6 +82,8 @@ def load_config(
         erc8004_identity=_get("ERC8004_IDENTITY_REGISTRY"),
         erc8004_reputation=_get("ERC8004_REPUTATION_REGISTRY"),
         axl_endpoint=_get(axl_endpoint_key, "http://localhost:9001"),
+        axl_transport=_get("AXL_TRANSPORT", "gensyn"),
+        axl_peer_id=_get(axl_peer_id_key),
         keeperhub_endpoint=_get("KEEPERHUB_MCP_ENDPOINT"),
         keeperhub_api_key=_get("KEEPERHUB_API_KEY"),
         keeperhub_workflow_lock=_get("KEEPERHUB_WORKFLOW_LOCK"),

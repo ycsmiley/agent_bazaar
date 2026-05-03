@@ -1,16 +1,8 @@
 """Uniswap Trade API client.
 
-Two flows drive Agent Bazaar:
-
-  Pre-lock swap    — buyer holds ETH but escrow only takes USDC.
-                     swap ETH → USDC, then hand off to KeeperHub lock.
-
-  Post-release swap — seller prefers DAI (or any other token); the release
-                     keeper reads the seller's preference and swaps
-                     USDC → DAI on their behalf before the payout lands.
-
-Each `swap()` call returns a real TxID — this is the identifier Uniswap's
-hackathon track requires in the submission.
+Agent Bazaar currently uses Uniswap as a real quote/check proof for supported
+Base routes. Escrow settlement in the hackathon demo uses Base Sepolia MockUSDC
+separately, so the demo does not claim a swap tx.
 """
 
 from __future__ import annotations
@@ -137,10 +129,8 @@ class UniswapClient:
     ) -> SwapResult:
         """Execute the swap the buyer/seller has a quote for.
 
-        For hackathon demos we rely on the Trade API building + submitting the
-        tx directly via the wallet service (the `wallet` query param on the
-        Uniswap side). The returned tx_hash is the real on-chain TxID the
-        Uniswap track requires in the submission.
+        This method is kept for the production path, but the hackathon demo uses
+        quote/check proof only and does not call `/swap`.
         """
         payload: dict[str, Any] = {
             "quote": quote.raw["quote"],
@@ -169,7 +159,7 @@ class UniswapClient:
         usdc_address: str,
         chain_id: int = 84532,
     ) -> SwapResult:
-        """Buyer side: swap whatever-they-hold → USDC so the escrow can lock."""
+        """Production path: swap whatever the buyer holds into escrow USDC."""
         quote = await self.quote(
             token_in=input_token,
             token_out=usdc_address,
@@ -188,7 +178,7 @@ class UniswapClient:
         preferred_token: str,
         chain_id: int = 84532,
     ) -> SwapResult:
-        """Seller side: released USDC → preferred token (e.g. DAI)."""
+        """Production path: swap released USDC into the seller's preferred token."""
         quote = await self.quote(
             token_in=usdc_address,
             token_out=preferred_token,

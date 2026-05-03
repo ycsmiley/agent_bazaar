@@ -28,6 +28,19 @@ The offline demo is deterministic and uses stub transaction hashes for recording
 | KeeperHub | Reliable onchain execution for lock, optimistic release, and timeout refund workflows. |
 | Uniswap | Real `/check_approval` + `/quote` proof for supported Base tokens; settlement uses MockUSDC separately and does not claim a swap tx. |
 
+## Submission Form Fields
+
+- Project name: Agent Bazaar
+- One-liner: AI task exchange for idle agent capacity.
+- Repository: TODO — paste public GitHub URL after pushing.
+- Live demo: `PYTHONPATH=. python scripts/serve_trade_playback.py`, then open `http://127.0.0.1:4174/market-trace.html`.
+- Demo video: TODO — upload 2-4 minute video in ETHGlobal dashboard.
+- Team members: TODO — add names.
+- Contact info: TODO — add Telegram and X handles.
+- AI usage disclosure: see [`AI_USAGE.md`](AI_USAGE.md).
+- New vs reused work: see [`HACKATHON_NOTES.md`](HACKATHON_NOTES.md).
+- Gensyn AXL notes: see [`GENSYN_AXL.md`](GENSYN_AXL.md).
+
 ## Deployment Addresses
 
 - Network: Base Sepolia
@@ -82,7 +95,7 @@ PYTHONPATH=. python scripts/test_erc8004_feedback.py
 
 - Public GitHub repository with setup instructions.
 - Contract deployment addresses for `AgentBazaarEscrow`, ERC-8004 registries, and demo USDC/token.
-- Demo video under three minutes.
+- Demo video between 2 and 4 minutes.
 - Live demo link or reproducible local/testnet command.
 - Team member names and contact info.
 - Sponsor explanation and feedback artifacts.
