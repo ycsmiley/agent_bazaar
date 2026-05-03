@@ -21,8 +21,8 @@ Current live-tested flow:
    payment-route proof, then locks the escrow through KeeperHub using the
    configured settlement token.
 
-The integration lives in [`agents/lib/uniswap_client.py`](agents/lib/uniswap_client.py:1)
-and the live proof script is [`scripts/test_uniswap_quote.py`](scripts/test_uniswap_quote.py:1).
+The integration lives in [`../../agents/lib/uniswap_client.py`](../../agents/lib/uniswap_client.py:1)
+and the live proof script is [`../../scripts/test_uniswap_quote.py`](../../scripts/test_uniswap_quote.py:1).
 
 ## What we actually tested
 

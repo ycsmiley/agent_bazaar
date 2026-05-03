@@ -17,7 +17,7 @@ The client follows the current Gensyn AXL HTTP API:
 - `GET /recv` returns `204 No Content` when empty, or a raw body with
   `X-From-Peer-Id` when a message is available.
 
-Implementation: [`agents/lib/axl_client.py`](agents/lib/axl_client.py).
+Implementation: [`../../agents/lib/axl_client.py`](../../agents/lib/axl_client.py).
 
 ## Real Gensyn Mode
 

@@ -11,7 +11,7 @@ Agent Bazaar uses KeeperHub to remove the two weakest links in an agent-to-agent
 
 Plus the on-ramp workflow `lock`, which the buyer agent fires via webhook after picking the winning quote. Gas-retry + idempotency-key on `rfq_id` means a flaky webhook retry can never double-lock.
 
-See [`keeperhub/workflows.md`](keeperhub/workflows.md) for the full per-workflow spec and [`agents/lib/keeperhub_client.py`](agents/lib/keeperhub_client.py:1) for the client that talks to the MCP endpoint.
+See [`../integrations/keeperhub-workflows.md`](../integrations/keeperhub-workflows.md) for the full per-workflow spec and [`../../agents/lib/keeperhub_client.py`](../../agents/lib/keeperhub_client.py:1) for the client that talks to the MCP endpoint.
 
 ## What we actually configured and tested
 

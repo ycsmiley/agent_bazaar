@@ -42,7 +42,7 @@ The offline demo is deterministic and uses stub transaction hashes for recording
 - AI usage disclosure: see [`AI_USAGE.md`](AI_USAGE.md).
 - New vs reused work: see [`HACKATHON_NOTES.md`](HACKATHON_NOTES.md).
 - Development process and team direction: see [`DEVELOPMENT_PROCESS.md`](DEVELOPMENT_PROCESS.md).
-- Gensyn AXL notes: see [`GENSYN_AXL.md`](GENSYN_AXL.md).
+- Gensyn AXL notes: see [`../integrations/gensyn-axl.md`](../integrations/gensyn-axl.md).
 
 ## Deployment Addresses
 

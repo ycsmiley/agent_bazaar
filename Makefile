@@ -1,4 +1,4 @@
-.PHONY: install test lint fmt demo trace trade-playback forge-test
+.PHONY: install test lint fmt demo market-service sdk-demo axl-demo axl-demo-external forge-test
 
 install:
 	python -m pip install -e '.[dev]'
@@ -15,11 +15,17 @@ fmt:
 demo:
 	bash scripts/run_demo.sh
 
-trace:
-	PYTHONPATH=. python scripts/generate_market_trace.py
-
-trade-playback:
+market-service:
 	PYTHONPATH=. python scripts/serve_trade_playback.py
+
+sdk-demo:
+	PYTHONPATH=. python examples/seller_sdk_quickstart.py
+
+axl-demo:
+	PYTHONPATH=. python scripts/run_axl_demo.py
+
+axl-demo-external:
+	PYTHONPATH=. python scripts/run_axl_demo.py --external
 
 forge-test:
 	forge test -vv

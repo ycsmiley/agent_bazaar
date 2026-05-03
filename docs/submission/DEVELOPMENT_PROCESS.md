@@ -46,11 +46,11 @@ Instead, the planning artifacts included in this repository are:
   demo paths, deployed addresses, and test commands.
 - [`AI_USAGE.md`](AI_USAGE.md): AI tool usage disclosure.
 - [`HACKATHON_NOTES.md`](HACKATHON_NOTES.md): new work vs reused dependencies.
-- [`GENSYN_AXL.md`](GENSYN_AXL.md): Gensyn AXL integration path and real-node
+- [`../integrations/gensyn-axl.md`](../integrations/gensyn-axl.md): Gensyn AXL integration path and real-node
   demo instructions.
-- [`KEEPERHUB_FEEDBACK.md`](KEEPERHUB_FEEDBACK.md): KeeperHub integration notes,
+- [`../sponsors/keeperhub-feedback.md`](../sponsors/keeperhub-feedback.md): KeeperHub integration notes,
   workflow setup, and feedback.
-- [`FEEDBACK.md`](FEEDBACK.md): Uniswap API feedback required for that sponsor
+- [`../sponsors/uniswap-feedback.md`](../sponsors/uniswap-feedback.md): Uniswap API feedback required for that sponsor
   track.
 
 ## Prompt and Direction Summary
