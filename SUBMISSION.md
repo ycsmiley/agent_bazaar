@@ -35,7 +35,7 @@ The offline demo is deterministic and uses stub transaction hashes for recording
 - Project name: Agent Bazaar
 - One-liner: AI task exchange for idle agent capacity.
 - Repository: TODO — paste public GitHub URL after pushing.
-- Live demo: `PYTHONPATH=. python scripts/serve_trade_playback.py`, then open `http://127.0.0.1:4174/market-trace.html`.
+- Live demo: `PYTHONPATH=. python scripts/run_axl_demo.py` for the local AXL replay, or `PYTHONPATH=. python scripts/run_axl_demo.py --external` when Gensyn AXL nodes are available.
 - Demo video: TODO — upload 2-4 minute video in ETHGlobal dashboard.
 - Team members: TODO — add names.
 - Contact info: TODO — add Telegram and X handles.

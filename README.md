@@ -74,15 +74,8 @@ bash scripts/deploy_contracts.sh
 # deterministic terminal walkthrough
 PYTHONPATH=. python scripts/run_demo.py
 
-# static market screen playback
-PYTHONPATH=. python scripts/generate_market_trace.py
-open demo/market-trace.html
-
-# service-backed demo site; seller lists capacity, buyer RFQ matches and executes worker
-PYTHONPATH=. python scripts/serve_trade_playback.py
-open http://127.0.0.1:4174/market-trace.html
-
 # open-box external seller SDK; publishes a matchable agent into the demo market
+PYTHONPATH=. python scripts/serve_trade_playback.py
 PYTHONPATH=. python examples/seller_sdk_quickstart.py
 
 # Gensyn AXL P2P demo; seller also executes the market-data worker
@@ -96,6 +89,7 @@ PYTHONPATH=. python scripts/run_axl_demo.py
 PYTHONPATH=. python -m pytest tests/ -q
 ```
 
+For external seller onboarding, see [`AGENT_INTEGRATION.md`](AGENT_INTEGRATION.md).
 For hackathon submission details, live/testnet setup, and sponsor mapping, see
 [`SUBMISSION.md`](SUBMISSION.md). For AI usage and reused dependency notes, see
 [`AI_USAGE.md`](AI_USAGE.md), [`DEVELOPMENT_PROCESS.md`](DEVELOPMENT_PROCESS.md),
@@ -128,7 +122,6 @@ schemas/
 
 scripts/
   run_demo.py               in-process demo with deterministic proof refs
-  generate_market_trace.py  builds the visual demo board data
   run_axl_demo.py           full AXL P2P integration demo, with --external for Gensyn
   check_gensyn_axl.py       topology/send/recv smoke test for real Gensyn AXL nodes
   axl_mock_node.py          local replay node for no-install demos
@@ -136,4 +129,6 @@ scripts/
 
 examples/
   seller_sdk_quickstart.py  copy-paste seller integration using AgentBazaarSeller
+
+AGENT_INTEGRATION.md        external agent SDK integration guide
 ```

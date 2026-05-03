@@ -13,7 +13,7 @@ Key new components include:
 - KeeperHub settlement client and workflow documentation.
 - Escrow, MockUSDC, and ERC-8004-style identity/reputation contracts.
 - Uniswap quote/check client and live quote proof script.
-- Agent Bazaar live market screen and local demo service.
+- Agent Bazaar SDK onboarding path and local market service.
 - Sponsor feedback artifacts and submission notes.
 
 See [`DEVELOPMENT_PROCESS.md`](DEVELOPMENT_PROCESS.md) for the team-directed

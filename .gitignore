@@ -50,5 +50,8 @@ logs/
 .agentbazaar/
 *.local.json
 .gstack/
-.gstack/
-.gstack/
+ChangeLog.md
+DEMO_RUNBOOK.md
+demo/README.md
+demo/market-trace.html
+demo/market-trace-data.js

@@ -14,10 +14,10 @@ as a replacement for team direction.
 - Removing unused 0G/TEE scaffolding and updating tests.
 - Implementing and refining the buyer/seller flow around RFQs, quotes, escrow,
   KeeperHub workflows, Uniswap quote proof, and ERC-8004-style registries.
-- Drafting and polishing README, submission notes, sponsor feedback, and demo
-  guidance.
-- Building the local service-backed Agent Bazaar market screen used for demo
-  presentation.
+- Drafting and polishing README, submission notes, sponsor feedback, and
+  integration guidance.
+- Building the local service-backed Agent Bazaar SDK onboarding path used for
+  demo validation.
 
 ## Human Direction
 
