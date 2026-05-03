@@ -17,7 +17,7 @@ async def test_gensyn_send_uses_official_send_endpoint() -> None:
 
     request = route.calls.last.request
     assert request.headers["X-Destination-Peer-Id"] == "seller-peer"
-    assert request.content == b'{"rfq_id":"rfq-1"}'
+    assert request.content == b'{"_axl_sender_peer_id":"buyer","rfq_id":"rfq-1"}'
     await client.aclose()
 
 

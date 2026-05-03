@@ -78,9 +78,11 @@ class AxlClient:
                 json={"payload": message, "from": self.peer_id},
             )
         else:
+            outbound = dict(message)
+            outbound["_axl_sender_peer_id"] = self.peer_id
             resp = await self._http.post(
                 "/send",
-                content=json.dumps(message, sort_keys=True, separators=(",", ":")).encode(),
+                content=json.dumps(outbound, sort_keys=True, separators=(",", ":")).encode(),
                 headers={
                     "Content-Type": "application/json",
                     "X-Destination-Peer-Id": peer_id,

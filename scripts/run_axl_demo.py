@@ -35,6 +35,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from nacl.signing import SigningKey
 from rich.console import Console
 from rich.panel import Panel
@@ -146,7 +147,7 @@ async def run_buyer(
     trigger = {
         "locked": True,
         "rfq_id": rfq_signed.rfq_id,
-        "buyer_peer_id": buyer_sk.verify_key.encode().hex(),
+        "buyer_peer_id": buyer_peer_id_hex,
         "task_input": rfq_signed.task.input,
     }
     await axl.send(seller_peer_id, trigger)
@@ -215,7 +216,7 @@ async def run_seller(
             quote = QuoteMessage(
                 rfq_id=rfq.rfq_id,
                 seller_agent_id=seller_addr,
-                seller_axl_peer_id=seller_peer_id_hex,
+                seller_axl_peer_id=seller_sk.verify_key.encode().hex(),
                 quote_price_atomic=min(rfq.budget.max_usdc_atomic, 420_000),
                 confidence_score=0.91,
                 estimated_delivery_ms=2800,
@@ -228,7 +229,8 @@ async def run_seller(
             )
             q_dict = quote.model_dump()
             _sign(q_dict, seller_sk)
-            await axl.send(rfq.buyer_axl_peer_id, q_dict)
+            buyer_transport_peer_id = msg.get("_axl_sender_peer_id") or msg.get("_axl_from_peer_id")
+            await axl.send(buyer_transport_peer_id or rfq.buyer_axl_peer_id, q_dict)
             console.print(f"[magenta]Seller[/] → Quote sent (price={quote.quote_price_atomic})")
 
         # Locked trigger?
@@ -277,6 +279,8 @@ async def main() -> None:
         help="Use real Gensyn AXL nodes from env instead of local mock nodes.",
     )
     args = ap.parse_args()
+
+    load_dotenv(ROOT / ".env")
 
     logging.basicConfig(level=logging.WARNING)
     console.print(Panel.fit(

@@ -90,7 +90,7 @@ class SellerAgent:
 
     async def _handle(self, msg: dict[str, Any]) -> None:
         if "task" in msg and "budget" in msg:
-            buyer_transport_peer_id = msg.get("_axl_from_peer_id")
+            buyer_transport_peer_id = msg.get("_axl_from_peer_id") or msg.get("_axl_sender_peer_id")
             rfq = RFQMessage.model_validate(msg)
             if not verify_payload(msg, rfq.buyer_axl_peer_id):
                 log.warning("dropping RFQ with bad signature")
