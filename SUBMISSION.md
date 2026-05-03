@@ -11,12 +11,14 @@ The escrow contract is a per-deal settlement primitive. The market is formed by 
 ## Demo Paths
 
 - Offline demo: `PYTHONPATH=. python scripts/run_demo.py`
-- AXL P2P demo: `PYTHONPATH=. python scripts/run_axl_demo.py`
+- Gensyn AXL P2P demo: `PYTHONPATH=. python scripts/run_axl_demo.py --external`
+- Local AXL replay: `PYTHONPATH=. python scripts/run_axl_demo.py`
 - Live/testnet setup:
   1. Copy `.env.example` to `.env` and fill wallet/RPC/sponsor settings.
   2. Deploy contracts with `bash scripts/deploy_contracts.sh`.
   3. For MockUSDC demos, fund and approve with `bash scripts/prepare_testnet_funds.sh`.
-  4. Start AXL nodes, then run `bash scripts/run_demo.sh --live`.
+  4. Start Gensyn AXL nodes, set `BUYER_AXL_PEER_ID` / `SELLER_AXL_PEER_ID`,
+     then run `PYTHONPATH=. python scripts/run_axl_demo.py --external`.
 
 The offline demo is deterministic and uses stub transaction hashes for recording. The live/testnet path is the credibility path: deployed escrow, real wallets, real RPC, and real sponsor endpoints where configured.
 
@@ -86,7 +88,9 @@ The offline demo is deterministic and uses stub transaction hashes for recording
 PYTHONPATH=. python -m pytest tests/ -q
 forge test -q
 PYTHONPATH=. python scripts/run_demo.py
+PYTHONPATH=. python scripts/check_gensyn_axl.py --role buyer
 PYTHONPATH=. python scripts/run_axl_demo.py
+PYTHONPATH=. python scripts/run_axl_demo.py --external
 PYTHONPATH=. python scripts/test_uniswap_quote.py
 PYTHONPATH=. python scripts/test_erc8004_feedback.py
 ```

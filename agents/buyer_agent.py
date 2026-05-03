@@ -132,7 +132,7 @@ class BuyerAgent:
         rfq = RFQMessage(
             rfq_id=_new_rfq_id(),
             buyer_agent_id=self.agent_id,
-            buyer_axl_peer_id=self.axl_peer_id,
+            buyer_axl_peer_id=self.verify_key_hex,
             task=Task(
                 type=task_type,
                 input={

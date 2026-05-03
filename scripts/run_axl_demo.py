@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-AXL Integration Demo — exercises the real Gensyn AXL transport layer.
+AXL Integration Demo — exercises the Gensyn AXL transport layer.
 
-Spins up two mock AXL nodes in-process, then runs a buyer and seller
-through the full message sequence:
+By default it spins up two local mock AXL nodes so the repo demo is repeatable.
+With `--external`, it uses real Gensyn AXL nodes from:
+
+  BUYER_AXL_ENDPOINT / BUYER_AXL_PEER_ID
+  SELLER_AXL_ENDPOINT / SELLER_AXL_PEER_ID
+
+Then it runs a buyer and seller through the full message sequence:
 
   1.  Buyer broadcasts RFQ over AXL
   2.  Seller receives, validates, builds and signs a Quote
@@ -19,11 +24,11 @@ script runs without sponsor credentials. The live/testnet path uses real
 KeeperHub workflows, escrow transactions, ERC-8004 registries, and Uniswap
 quote API responses.
 """
-from __future__ import annotations
-
+import argparse
 import asyncio
 import json
 import logging
+import os
 import sys
 import time
 import uuid
@@ -81,11 +86,13 @@ async def _drain(axl: AxlClient, timeout: float) -> list[dict[str, Any]]:
 async def run_buyer(
     seller_peer_id: str,
     *,
+    buyer_endpoint: str,
+    axl_transport: str,
     buyer_sk: SigningKey,
     buyer_addr: str,
     buyer_peer_id_hex: str,
 ) -> dict[str, str]:
-    axl = AxlClient(BUYER_ADDR, peer_id=buyer_peer_id_hex)
+    axl = AxlClient(buyer_endpoint, peer_id=buyer_peer_id_hex, api_mode=axl_transport)
 
     # 1. Build + broadcast RFQ
     rfq = RFQMessage(
@@ -188,11 +195,13 @@ async def run_buyer(
 
 async def run_seller(
     *,
+    seller_endpoint: str,
+    axl_transport: str,
     seller_sk: SigningKey,
     seller_addr: str,
     seller_peer_id_hex: str,
 ) -> None:
-    axl = AxlClient(SELLER_ADDR, peer_id=seller_peer_id_hex)
+    axl = AxlClient(seller_endpoint, peer_id=seller_peer_id_hex, api_mode=axl_transport)
 
     async for msg in axl.inbox():
         # Handle nested envelopes from mock AXL
@@ -261,6 +270,14 @@ async def run_seller(
 # ── main ───────────────────────────────────────────────────────────────────────
 
 async def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument(
+        "--external",
+        action="store_true",
+        help="Use real Gensyn AXL nodes from env instead of local mock nodes.",
+    )
+    args = ap.parse_args()
+
     logging.basicConfig(level=logging.WARNING)
     console.print(Panel.fit(
         "Agent Bazaar — AXL P2P Integration Demo",
@@ -271,12 +288,27 @@ async def main() -> None:
         style="bold magenta",
     ))
 
-    # Boot two mock AXL nodes
-    buyer_node  = AXLNode(port=BUYER_PORT,  name="buyer_demo",  peer_addrs=[SELLER_ADDR])
-    seller_node = AXLNode(port=SELLER_PORT, name="seller_demo", peer_addrs=[BUYER_ADDR])
-    buyer_node.start()
-    seller_node.start()
-    await asyncio.sleep(0.8)  # let peer discovery complete
+    buyer_endpoint = BUYER_ADDR
+    seller_endpoint = SELLER_ADDR
+    axl_transport = "mock"
+    buyer_node = None
+    seller_node = None
+
+    if args.external:
+        buyer_endpoint = os.environ.get("BUYER_AXL_ENDPOINT", "").rstrip("/")
+        seller_endpoint = os.environ.get("SELLER_AXL_ENDPOINT", "").rstrip("/")
+        axl_transport = os.environ.get("AXL_TRANSPORT", "gensyn")
+        if not buyer_endpoint or not seller_endpoint:
+            raise RuntimeError("BUYER_AXL_ENDPOINT and SELLER_AXL_ENDPOINT are required")
+        if axl_transport != "gensyn":
+            raise RuntimeError("AXL_TRANSPORT must be gensyn for --external")
+    else:
+        # Boot two mock AXL nodes for deterministic local replay.
+        buyer_node = AXLNode(port=BUYER_PORT, name="buyer_demo", peer_addrs=[SELLER_ADDR])
+        seller_node = AXLNode(port=SELLER_PORT, name="seller_demo", peer_addrs=[BUYER_ADDR])
+        buyer_node.start()
+        seller_node.start()
+        await asyncio.sleep(0.8)  # let peer discovery complete
 
     # Keypairs
     buyer_sk  = SigningKey.generate()
@@ -284,21 +316,30 @@ async def main() -> None:
     buyer_addr  = "0x" + "ba" * 20
     seller_addr = "0x" + "5e" * 20
 
-    buyer_peer_id_hex  = buyer_sk.verify_key.encode().hex()
-    seller_peer_id_hex = seller_sk.verify_key.encode().hex()
+    buyer_peer_id_hex = os.environ.get("BUYER_AXL_PEER_ID", "")
+    if not args.external:
+        buyer_peer_id_hex = buyer_sk.verify_key.encode().hex()
+    seller_peer_id_hex = (
+        os.environ.get("SELLER_AXL_PEER_ID", "")
+        if args.external
+        else seller_sk.verify_key.encode().hex()
+    )
+    if args.external and (not buyer_peer_id_hex or not seller_peer_id_hex):
+        raise RuntimeError("BUYER_AXL_PEER_ID and SELLER_AXL_PEER_ID are required")
 
-    # Register ed25519 peer IDs directly — no HTTP round-trip needed
-    # Buyer node knows seller's ed25519 peer_id → seller HTTP addr
-    buyer_node.register_peer(seller_peer_id_hex, SELLER_ADDR, "seller")
-    # Seller node knows buyer's ed25519 peer_id → buyer HTTP addr
-    seller_node.register_peer(buyer_peer_id_hex, BUYER_ADDR, "buyer")
-    await asyncio.sleep(0.2)
+    if buyer_node and seller_node:
+        # Register ed25519 peer IDs directly — no HTTP round-trip needed.
+        buyer_node.register_peer(seller_peer_id_hex, SELLER_ADDR, "seller")
+        seller_node.register_peer(buyer_peer_id_hex, BUYER_ADDR, "buyer")
+        await asyncio.sleep(0.2)
 
     console.print("\n[bold]Step 1-4:[/] Buyer ↔ Seller AXL exchange\n")
 
     # Run seller in background task
     seller_task = asyncio.create_task(
         run_seller(
+            seller_endpoint=seller_endpoint,
+            axl_transport=axl_transport,
             seller_sk=seller_sk,
             seller_addr=seller_addr,
             seller_peer_id_hex=seller_peer_id_hex,
@@ -310,6 +351,8 @@ async def main() -> None:
     # Run buyer (drives the whole flow)
     result = await run_buyer(
         seller_peer_id=seller_peer_id_hex,
+        buyer_endpoint=buyer_endpoint,
+        axl_transport=axl_transport,
         buyer_sk=buyer_sk,
         buyer_addr=buyer_addr,
         buyer_peer_id_hex=buyer_peer_id_hex,

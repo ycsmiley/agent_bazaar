@@ -1,61 +1,79 @@
-# Gensyn AXL Integration Notes
+# Gensyn AXL Integration
 
-## Current State
+Agent Bazaar uses Gensyn AXL as the buyer/seller transport layer for agent-to-agent
+market messages:
 
-Agent Bazaar has an AXL-shaped transport client and a two-node P2P demo:
+- buyer -> seller: signed RFQ
+- seller -> buyer: signed quote
+- buyer -> seller: escrow locked trigger
+- seller -> buyer: signed delivery payload
 
-- [`agents/lib/axl_client.py`](agents/lib/axl_client.py) wraps the control-plane
-  verbs the buyer/seller agents need: topology, send, broadcast, and inbox.
-- [`scripts/axl_mock_node.py`](scripts/axl_mock_node.py) runs isolated buyer and
-  seller nodes with separate inboxes and peer registries.
-- [`scripts/run_axl_demo.py`](scripts/run_axl_demo.py) demonstrates buyer → seller
-  RFQ, seller → buyer quote, buyer → seller lock trigger, and seller → buyer
-  delivery payload.
+## Official API Shape
 
-This proves the agent protocol boundary and message flow, but it is not a final
-claim that the demo is running against a production Gensyn AXL deployment.
+The client follows the current Gensyn AXL HTTP API:
 
-According to Gensyn's AXL overview, AXL is a standalone P2P node that exposes a
-local HTTP API for messaging, topology discovery, MCP, and A2A support. Our
-client intentionally follows that boundary so the mock can be replaced with a
-real AXL node later without changing RFQ/quote/delivery payloads.
+- `GET /topology` lists the local node and known peers.
+- `POST /send` sends raw bytes to `X-Destination-Peer-Id`.
+- `GET /recv` returns `204 No Content` when empty, or a raw body with
+  `X-From-Peer-Id` when a message is available.
 
-## Why The Mock Exists
+Implementation: [`agents/lib/axl_client.py`](agents/lib/axl_client.py).
 
-The buyer/seller protocol only needs a few AXL-style primitives:
+## Real Gensyn Mode
 
-- discover known peers,
-- send a signed JSON payload to a peer,
-- receive queued messages,
-- keep buyer and seller nodes isolated.
+Run two Gensyn AXL nodes and put their local API endpoints and public keys in
+`.env`:
 
-The local mock lets judges run the flow without a Gensyn node install, while the
-client code keeps the transport boundary explicit.
+```bash
+AXL_TRANSPORT=gensyn
+BUYER_AXL_ENDPOINT=http://127.0.0.1:9002
+SELLER_AXL_ENDPOINT=http://127.0.0.1:9012
+BUYER_AXL_PEER_ID=<buyer node our_public_key>
+SELLER_AXL_PEER_ID=<seller node our_public_key>
+```
 
-## What To Show If Claiming Gensyn
+Check each node:
 
-Run:
+```bash
+PYTHONPATH=. python scripts/check_gensyn_axl.py --role buyer
+PYTHONPATH=. python scripts/check_gensyn_axl.py --role seller
+```
+
+Send a cross-node ping:
+
+```bash
+PYTHONPATH=. python scripts/check_gensyn_axl.py --role buyer --send-to "$SELLER_AXL_PEER_ID"
+PYTHONPATH=. python scripts/check_gensyn_axl.py --role seller --recv
+```
+
+Run the full RFQ/quote/delivery sequence across real AXL nodes:
+
+```bash
+PYTHONPATH=. python scripts/run_axl_demo.py --external
+```
+
+## Local Replay Mode
+
+For judges who do not have a Gensyn node installed, the repo also includes a
+local mock that implements the older local-demo endpoints. This is only a
+repeatable replay path; the production client defaults to `AXL_TRANSPORT=gensyn`.
 
 ```bash
 PYTHONPATH=. python scripts/run_axl_demo.py
 ```
 
-Show that the demo uses two separate node endpoints:
+The local replay still uses two isolated node endpoints:
 
 - buyer node: `http://localhost:19001`
 - seller node: `http://localhost:19002`
 
-Show the console sequence:
+## Demo Claim
 
-1. buyer sends RFQ,
-2. seller receives RFQ,
-3. seller returns signed quote,
-4. buyer sends locked trigger,
-5. seller returns delivery payload,
-6. buyer verifies result hash.
+The Gensyn claim should be:
 
-## Remaining Risk
+> Agent Bazaar routes marketplace negotiation over Gensyn AXL: RFQs, quotes,
+> lock triggers, and delivery payloads move between separate AXL nodes before
+> KeeperHub executes escrow settlement.
 
-If the project submits for a Gensyn prize, the strongest version would replace
-`scripts/axl_mock_node.py` with a real Gensyn AXL node/binary while keeping
-`AxlClient` and the buyer/seller payload schema unchanged.
+Do not describe the local mock as the sponsor integration. The sponsor demo path
+is `scripts/run_axl_demo.py --external` after real AXL nodes are running.

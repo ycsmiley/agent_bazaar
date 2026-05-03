@@ -90,11 +90,12 @@ class SellerAgent:
 
     async def _handle(self, msg: dict[str, Any]) -> None:
         if "task" in msg and "budget" in msg:
+            buyer_transport_peer_id = msg.get("_axl_from_peer_id")
             rfq = RFQMessage.model_validate(msg)
             if not verify_payload(msg, rfq.buyer_axl_peer_id):
                 log.warning("dropping RFQ with bad signature")
                 return
-            await self._maybe_quote(rfq)
+            await self._maybe_quote(rfq, buyer_transport_peer_id=buyer_transport_peer_id)
             return
 
         if msg.get("locked") and msg.get("rfq_id"):
@@ -104,7 +105,7 @@ class SellerAgent:
                 msg.get("task_input", {}),
             )
 
-    async def _maybe_quote(self, rfq: RFQMessage) -> None:
+    async def _maybe_quote(self, rfq: RFQMessage, *, buyer_transport_peer_id: str | None) -> None:
         task_type = rfq.task.type.value
         if task_type not in {"data_fetch", "api_call", "computation", "llm_inference"}:
             return
@@ -112,7 +113,7 @@ class SellerAgent:
         quote = QuoteMessage(
             rfq_id=rfq.rfq_id,
             seller_agent_id=self.agent_id,
-                seller_axl_peer_id=self.axl_peer_id,
+            seller_axl_peer_id=self.verify_key_hex,
             quote_price_atomic=min(rfq.budget.max_usdc_atomic, 420_000),
             confidence_score=0.91,
             estimated_delivery_ms=2800,
@@ -125,7 +126,7 @@ class SellerAgent:
         )
         payload = quote.model_dump()
         payload["signature"] = sign_payload(payload, self.signing_key)
-        await self.axl.send(rfq.buyer_axl_peer_id, payload)
+        await self.axl.send(buyer_transport_peer_id or rfq.buyer_axl_peer_id, payload)
         log.info("sent quote for rfq=%s price=%d", rfq.rfq_id[:8], quote.quote_price_atomic)
 
     async def _execute_and_deliver(

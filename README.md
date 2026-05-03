@@ -81,7 +81,10 @@ open demo/market-trace.html
 # local service-backed version
 PYTHONPATH=. python scripts/serve_trade_playback.py
 
-# AXL P2P demo (spins up real mock AXL nodes)
+# Gensyn AXL P2P demo (real AXL nodes from .env)
+PYTHONPATH=. python scripts/run_axl_demo.py --external
+
+# local AXL replay (spins up mock nodes)
 PYTHONPATH=. python scripts/run_axl_demo.py
 
 # tests
@@ -120,7 +123,8 @@ schemas/
 scripts/
   run_demo.py               in-process demo with deterministic proof refs
   generate_market_trace.py  builds the visual demo board data
-  run_axl_demo.py           full AXL P2P integration demo
-  axl_mock_node.py          mock AXL node (topology/send/recv)
+  run_axl_demo.py           full AXL P2P integration demo, with --external for Gensyn
+  check_gensyn_axl.py       topology/send/recv smoke test for real Gensyn AXL nodes
+  axl_mock_node.py          local replay node for no-install demos
   deploy_contracts.sh       foundry deploy to Anvil
 ```

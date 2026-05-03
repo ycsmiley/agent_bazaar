@@ -15,7 +15,7 @@ from nacl.signing import SigningKey, VerifyKey
 
 
 def canonical_bytes(payload: dict[str, Any]) -> bytes:
-    body = {k: v for k, v in payload.items() if k != "signature"}
+    body = {k: v for k, v in payload.items() if k != "signature" and not k.startswith("_")}
     return json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode(
         "utf-8"
     )

@@ -151,6 +151,9 @@ class AxlClient:
             return
         payload = json.loads(raw.decode("utf-8"))
         if isinstance(payload, dict):
+            from_peer_id = resp.headers.get("X-From-Peer-Id")
+            if from_peer_id:
+                payload["_axl_from_peer_id"] = from_peer_id
             await self._inbox.put(payload)
 
     async def aclose(self) -> None:
