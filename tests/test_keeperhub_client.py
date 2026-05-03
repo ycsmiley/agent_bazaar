@@ -40,6 +40,28 @@ async def test_fire_lock_sends_idempotency_key_and_parses_tx():
 
 @pytest.mark.asyncio
 @respx.mock
+async def test_fire_lock_supports_webhook_url_and_execution_id():
+    route = respx.post("https://kh.test/webhook").mock(
+        return_value=Response(200, json={"executionId": "exec-1", "status": "running"})
+    )
+
+    client = KeeperHubClient("https://kh.test", api_key="k")
+    run = await client.fire_lock(
+        "https://kh.test/webhook",
+        rfq_id="0x" + "1" * 64,
+        seller="0x" + "b" * 40,
+        amount=1,
+        token="0x" + "c" * 40,
+    )
+    await client.aclose()
+
+    assert route.called
+    assert run.run_id == "exec-1"
+    assert run.status == "running"
+
+
+@pytest.mark.asyncio
+@respx.mock
 async def test_wait_for_tx_returns_on_tx_hash():
     respx.get("https://kh.test/runs/run-1").mock(
         side_effect=[

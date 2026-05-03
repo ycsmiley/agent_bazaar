@@ -91,7 +91,7 @@ async def main() -> None:
     seller_a = "0x" + "a" * 40
     seller_b = "0x" + "c" * 40
 
-    console.print(Panel.fit("AgentBazaar — end-to-end trade", style="bold magenta"))
+    console.print(Panel.fit("Agent Bazaar — end-to-end trade", style="bold magenta"))
 
     # 1. Buyer builds + broadcasts an RFQ.
     rfq = build_rfq(buyer_sk, buyer)
@@ -127,19 +127,21 @@ async def main() -> None:
     console.print(f"[bold green]Winner[/]: {winner.seller_agent_id[:10]} "
                   f"(reputation-weighted score beats cheaper quote)")
 
-    # 4–8. Fake out the on-chain path with stub TxIDs.
-    tx = {
-        "uniswap_swap": "0x" + "11" * 32,
-        "escrow_lock":  "0x" + "22" * 32,
+    # 4-8. Offline demo references. Live/testnet runs use real KeeperHub,
+    # escrow, ERC-8004, and Uniswap API proofs.
+    refs = {
+        "uniswap_quote_ref": "quote_52cdda69-9996-4b58-9101-d1451f44d8f0",
+        "escrow_lock": "0x" + "22" * 32,
         "escrow_confirm_delivery": "0x" + "33" * 32,
         "escrow_release": "0x" + "44" * 32,
         "erc8004_feedback": "0x" + "55" * 32,
     }
-    for label, h in tx.items():
-        console.print(f"[dim]tx[/] {label:<26s} {h}")
+    for label, ref in refs.items():
+        prefix = "quote" if label == "uniswap_quote_ref" else "tx"
+        console.print(f"[dim]{prefix}[/] {label:<26s} {ref}")
         await asyncio.sleep(0.2)
 
-    console.print(Panel.fit(json.dumps(tx, indent=2), title="TxID summary", style="bold blue"))
+    console.print(Panel.fit(json.dumps(refs, indent=2), title="Proof summary", style="bold blue"))
 
 
 if __name__ == "__main__":

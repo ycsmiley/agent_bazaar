@@ -1,6 +1,6 @@
 """KeeperHub MCP client.
 
-Three workflows power AgentBazaar's settlement guarantees:
+Three workflows power Agent Bazaar's settlement guarantees:
 
   lock      — buyer → escrow.lockFunds()         (webhook-triggered)
   release   — escrow.optimisticRelease()         (scheduled, every 30s)
@@ -48,7 +48,7 @@ class KeeperHubClient:
 
     async def trigger_workflow(
         self,
-        workflow_id: str,
+        workflow_id_or_webhook_url: str,
         args: dict[str, Any],
         *,
         idempotency_key: str | None = None,
@@ -57,11 +57,18 @@ class KeeperHubClient:
         re-fired webhook can't double-lock or double-release.
         """
         headers = {"Idempotency-Key": idempotency_key} if idempotency_key else {}
-        resp = await self._http.post(
-            f"/workflows/{workflow_id}/runs",
-            json={"inputs": args},
-            headers=headers,
-        )
+        if workflow_id_or_webhook_url.startswith(("http://", "https://")):
+            resp = await self._http.post(
+                workflow_id_or_webhook_url,
+                json=args,
+                headers=headers,
+            )
+        else:
+            resp = await self._http.post(
+                f"/workflows/{workflow_id_or_webhook_url}/runs",
+                json={"inputs": args},
+                headers=headers,
+            )
         resp.raise_for_status()
         return self._parse_run(resp.json())
 
@@ -89,7 +96,7 @@ class KeeperHubClient:
             elapsed += poll_interval_secs
         raise TimeoutError(f"KeeperHub run {run_id} did not produce a tx within {timeout_secs}s")
 
-    # ───── convenience helpers matching the three AgentBazaar workflows ───
+    # ───── convenience helpers matching the three Agent Bazaar workflows ───
 
     async def fire_lock(
         self,
@@ -146,7 +153,7 @@ class KeeperHubClient:
 
     def _parse_run(self, data: dict[str, Any]) -> WorkflowRun:
         return WorkflowRun(
-            run_id=data.get("run_id") or data.get("id", ""),
+            run_id=data.get("run_id") or data.get("id") or data.get("executionId", ""),
             workflow_id=data.get("workflow_id", ""),
             status=data.get("status", "unknown"),
             tx_hash=data.get("tx_hash") or (data.get("result") or {}).get("txHash"),

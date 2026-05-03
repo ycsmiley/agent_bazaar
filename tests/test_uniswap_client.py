@@ -25,6 +25,8 @@ async def test_check_approval_reports_needed():
     await client.aclose()
     assert not approval.approved
     assert approval.tx is not None
+    body = route_body(respx.calls[0])
+    assert body["chainId"] == 84532
 
 
 @pytest.mark.asyncio
@@ -62,3 +64,12 @@ async def test_bridge_to_usdc_returns_tx_hash():
 
     assert result.tx_hash == "0xabc"
     assert result.amount_out == 499_500
+    body = route_body(respx.calls[0])
+    assert body["tokenInChainId"] == 84532
+    assert body["tokenOutChainId"] == 84532
+
+
+def route_body(call) -> dict[str, object]:
+    import json
+
+    return json.loads(call.request.content.decode())

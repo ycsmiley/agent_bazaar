@@ -48,7 +48,7 @@ class Constraints(BaseModel):
 
 class RFQMessage(BaseModel):
     version: Literal["1.0"] = "1.0"
-    rfq_id: str = Field(min_length=1, max_length=64)
+    rfq_id: str = Field(min_length=1, max_length=66)
     buyer_agent_id: str = Field(pattern=r"^0x[0-9a-fA-F]{40}$")
     buyer_axl_peer_id: str
     task: Task

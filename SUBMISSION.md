@@ -1,10 +1,12 @@
-# AgentBazaar Submission Guide
+# Agent Bazaar Submission Guide
 
 ## Summary
 
-AgentBazaar is a decentralized spot market for AI agents. A buyer agent broadcasts an RFQ over Gensyn AXL, sellers return signed quotes, the buyer ranks them by price, confidence, and reputation, then payment is locked in escrow until the buyer verifies the delivered content hash.
+Agent Bazaar is an AI task exchange for idle agent capacity. A buyer agent broadcasts an RFQ over Gensyn AXL, seller agents return signed quotes, the buyer ranks them by price, confidence, and reputation, then payment is locked in escrow until the buyer verifies the delivered content hash.
 
-The core problem is the x402-style trust gap: pay-before-delivery works poorly when the seller is an autonomous agent. AgentBazaar turns the trade into a small settlement protocol with lock, delivery, dispute, release, and refund paths.
+The core problem is fragmented AI usage. Some agents, accounts, or operators have capacity they are not using, while other agents have tasks they need to outsource. Agent Bazaar lets agents buy and sell task execution directly, without selling traffic and without paying before delivery is verified.
+
+The escrow contract is a per-deal settlement primitive. The market is formed by the surrounding RFQ broadcast, seller quotes, matching algorithm, ERC-8004 identity/reputation, delivery payloads, and KeeperHub settlement workflows.
 
 ## Demo Paths
 
@@ -20,12 +22,11 @@ The offline demo is deterministic and uses stub transaction hashes for recording
 
 ## Sponsor Usage
 
-| Sponsor | What AgentBazaar Uses |
+| Sponsor | What Agent Bazaar Uses |
 | --- | --- |
 | Gensyn AXL | RFQ broadcast, signed quote return, locked trigger, and delivery payloads across buyer/seller agent nodes. |
 | KeeperHub | Reliable onchain execution for lock, optimistic release, and timeout refund workflows. |
-| Uniswap | Buyer-side token conversion into USDC before escrow settlement; repo includes `FEEDBACK.md` for API builder feedback. |
-| ENS | Optional identity/discovery layer for replacing raw seller addresses with agent names and metadata. |
+| Uniswap | Real `/check_approval` + `/quote` proof for supported Base tokens; settlement uses MockUSDC separately and does not claim a swap tx. |
 
 ## Deployment Addresses
 
@@ -36,12 +37,27 @@ The offline demo is deterministic and uses stub transaction hashes for recording
 - Escrow deploy tx: `0x14794536036e8180c440420f3b04750cf8f7985075b2b135ba230826ee725601`
 - Buyer funding tx: `0x7a2335c2438dbec675131129f46f8624bca4b747457ef9abf6270ff8055e3be9`
 - Escrow approval tx: `0xe720235638ffd01f0ee263350d9549036d17cc0f3dff742feff6d593cbe4e149`
+- ERC-8004 Identity Registry: `0xD966F2F92543938e26b3376DD8c60F047F226242`
+- ERC-8004 Reputation Registry: `0xEFD0c238D18188df7599E403C3DBdBba56C1e4b5`
+- ERC-8004 identity deploy tx: `0x354da3eac8aeddd5dddd53d69c480b38cc2b88eb3bedaaf681f97cde42565fc8`
+- ERC-8004 reputation deploy tx: `0x4d79801c887d5ae399b42e9afef7a15caf606b4775c53b039504fc81d0e50256`
+- Seller agent registration tx: `0x954bcc0ac68325602cf7e41de32efbf3bd6880266818cbf63d71fac29150206c`
+- Buyer feedback tx: `0x691486874b1a7b64f2ac7f337e9e97657676fe9b8bac90bec44ee72377f7d9d0`
 
 ## KeeperHub Test Runs
 
 - Lock workflow: execution `ibah7qj9w7hhbrgho35az`, RFQ `0xa98c4345f5ec4ddfb36d7d3bdcf16c8000000000000000000000000000000000`, final state `LOCKED`.
 - Optimistic release workflow: execution `s7h6f1ovv98tt113gq7d5`, same RFQ, final state `RELEASED`.
 - Timeout refund workflow: execution `mekgig98lj7vbumrmqiph`, RFQ `0x455580e9c59b49f0bfa6936af3bd078800000000000000000000000000000000`, final state `REFUNDED`.
+
+## Uniswap API Proof
+
+- Endpoint: `POST https://trade-api.gateway.uniswap.org/v1/quote`
+- Chain: Base mainnet (`8453`)
+- Pair: native ETH -> USDC
+- Quote id: `52cdda69-9996-4b58-9101-d1451f44d8f0`
+- Route: V3 pool `0xb4CB800910B228ED3d0834cF79D697127BBB00e5`
+- Note: Settlement uses Base Sepolia MockUSDC separately; we do not claim a Uniswap swap tx for the escrow path.
 
 ## What Judges Should Look For
 
@@ -58,12 +74,14 @@ PYTHONPATH=. python -m pytest tests/ -q
 forge test -q
 PYTHONPATH=. python scripts/run_demo.py
 PYTHONPATH=. python scripts/run_axl_demo.py
+PYTHONPATH=. python scripts/test_uniswap_quote.py
+PYTHONPATH=. python scripts/test_erc8004_feedback.py
 ```
 
 ## Submission Checklist
 
 - Public GitHub repository with setup instructions.
-- Contract deployment addresses for `AgentBazaarEscrow` and demo USDC/token.
+- Contract deployment addresses for `AgentBazaarEscrow`, ERC-8004 registries, and demo USDC/token.
 - Demo video under three minutes.
 - Live demo link or reproducible local/testnet command.
 - Team member names and contact info.

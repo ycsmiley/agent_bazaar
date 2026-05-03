@@ -1,6 +1,6 @@
 """Uniswap Trade API client.
 
-Two flows drive AgentBazaar:
+Two flows drive Agent Bazaar:
 
   Pre-lock swap    — buyer holds ETH but escrow only takes USDC.
                      swap ETH → USDC, then hand off to KeeperHub lock.
@@ -70,6 +70,7 @@ class UniswapClient:
         token: str,
         amount: int,
         wallet_address: str,
+        chain_id: int = 84532,
     ) -> Approval:
         """Returns the Permit2 approval tx the buyer needs to sign, or a
         flag saying the allowance is already sufficient.
@@ -80,6 +81,7 @@ class UniswapClient:
                 "token": token,
                 "amount": str(amount),
                 "walletAddress": wallet_address,
+                "chainId": chain_id,
             },
         )
         resp.raise_for_status()
@@ -95,6 +97,7 @@ class UniswapClient:
         token_out: str,
         amount_in: int,
         wallet_address: str,
+        chain_id: int = 84532,
         slippage_bps: int = 50,
     ) -> SwapQuote:
         resp = await self._http.post(
@@ -102,6 +105,8 @@ class UniswapClient:
             json={
                 "tokenIn": token_in,
                 "tokenOut": token_out,
+                "tokenInChainId": chain_id,
+                "tokenOutChainId": chain_id,
                 "amount": str(amount_in),
                 "type": "EXACT_INPUT",
                 "swapper": wallet_address,
@@ -162,6 +167,7 @@ class UniswapClient:
         amount_in: int,
         wallet_address: str,
         usdc_address: str,
+        chain_id: int = 84532,
     ) -> SwapResult:
         """Buyer side: swap whatever-they-hold → USDC so the escrow can lock."""
         quote = await self.quote(
@@ -169,6 +175,7 @@ class UniswapClient:
             token_out=usdc_address,
             amount_in=amount_in,
             wallet_address=wallet_address,
+            chain_id=chain_id,
         )
         return await self.swap(quote=quote, wallet_address=wallet_address)
 
@@ -179,6 +186,7 @@ class UniswapClient:
         wallet_address: str,
         usdc_address: str,
         preferred_token: str,
+        chain_id: int = 84532,
     ) -> SwapResult:
         """Seller side: released USDC → preferred token (e.g. DAI)."""
         quote = await self.quote(
@@ -186,6 +194,7 @@ class UniswapClient:
             token_out=preferred_token,
             amount_in=amount_in,
             wallet_address=wallet_address,
+            chain_id=chain_id,
         )
         return await self.swap(quote=quote, wallet_address=wallet_address)
 

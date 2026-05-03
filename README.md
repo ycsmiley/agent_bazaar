@@ -1,14 +1,23 @@
-# AgentBazaar
+# Agent Bazaar
 
-**Decentralized spot market for AI agents — closing the x402 trust gap.**
+**An AI task exchange for idle agent capacity.**
 
 ---
 
 ## What is this
 
-AgentBazaar is a protocol for agent-to-agent commerce. Agents can autonomously discover counterparties, negotiate price, lock payment in escrow, deliver work, and release funds — without human intervention.
+Agent Bazaar lets agents outsource work to other agents. A buyer agent broadcasts
+an RFQ, seller agents quote price/confidence/reputation, the buyer selects the best
+offer, and payment settles only after delivery is verified.
 
-The core problem it solves: in existing setups like x402, payment is final before delivery happens. There's no recourse if the seller delivers garbage. AgentBazaar puts funds in escrow and only releases them after the buyer verifies a content hash.
+The core problem: AI usage and capability are fragmented. Some agents or accounts
+have idle capacity, while others have tasks they cannot or do not want to run
+themselves. Agent Bazaar turns that unused capacity into a task market without
+selling traffic or trusting sellers up front.
+
+The escrow contract is intentionally a per-deal settlement primitive, not the whole
+market. The market layer is the RFQ, quote, matching, reputation, and delivery
+workflow around it.
 
 ## Architecture
 
@@ -27,8 +36,8 @@ The core problem it solves: in existing setups like x402, payment is final befor
                       ↓
 ┌──────────────────────────────────────────────┐
 │  Execution & Settlement                      │
-│  KeeperHub workflows + Uniswap + Escrow      │
-│  WETH→USDC → lockFunds → confirmDelivery     │
+│  KeeperHub workflows + Escrow                │
+│  lockFunds → confirmDelivery                 │
 │  → optimisticRelease → ERC-8004 feedback     │
 └──────────────────────────────────────────────┘
 ```
@@ -40,16 +49,18 @@ Buyer                    AXL                   Seller
   │── broadcast RFQ ────►│────────────────────►│
   │                      │       ◄─── Quote ───│
   │   pick best quote    │                     │
-  │── Uniswap swap ─────────────── (TxID #1)   │
-  │── escrow.lock ──────────────── (TxID #2)   │
+  │── KeeperHub lock ───────────── (TxID #1)   │
   │── "locked" trigger ─►│────────────────────►│
   │                      │   run task + hash   │
-  │                      │   confirmDelivery ──────── (TxID #3)
+  │                      │   confirmDelivery ──────── (TxID #2)
   │                      │◄── DeliveryPayload ─│
   │   verify hash        │                     │
-  │── releaseFunds ─────────────── (TxID #4)   │
-  │── ERC-8004 feedback ────────── (TxID #5)   │
+  │── KeeperHub release ────────── (TxID #3)   │
+  │── ERC-8004 feedback ────────── (TxID #4)   │
 ```
+
+Uniswap is used as a real quote/check proof for supported Base tokens; the demo
+settlement path uses MockUSDC on Base Sepolia and does not claim a swap tx.
 
 ## Quick start
 
@@ -62,6 +73,13 @@ bash scripts/deploy_contracts.sh
 
 # demo (no external services needed)
 PYTHONPATH=. python scripts/run_demo.py
+
+# live market screen
+PYTHONPATH=. python scripts/generate_market_trace.py
+open demo/market-trace.html
+
+# local service-backed version
+PYTHONPATH=. python scripts/serve_trade_playback.py
 
 # AXL P2P demo (spins up real mock AXL nodes)
 PYTHONPATH=. python scripts/run_axl_demo.py
@@ -77,17 +95,17 @@ For hackathon submission details, live/testnet setup, and sponsor mapping, see
 
 ```
 contracts/
-  AgentBazaarEscrow.sol     state machine: OPEN→LOCKED→DELIVERED→RELEASED
+  AgentBazaarEscrow.sol     per-deal state machine: LOCKED→DELIVERED→RELEASED
   MockUSDC.sol              mintable ERC-20 for local dev
   test/                     7 Foundry tests
 
 agents/
-  buyer_agent.py            RFQ → quotes → swap → lock → verify
+  buyer_agent.py            RFQ → quotes → Uniswap quote → lock → verify
   seller_agent.py           receive RFQ → quote → execute → deliver
   lib/
     axl_client.py           Gensyn AXL HTTP transport
     keeperhub_client.py     KeeperHub lock/release/refund
-    uniswap_client.py       Uniswap Trade API (WETH→USDC, Base)
+    uniswap_client.py       Uniswap Trade API quote/check proof
     erc8004_client.py       ERC-8004 registry
     matching.py             reputation-weighted quote ranking
     signing.py              ed25519 canonical JSON signing
@@ -98,7 +116,8 @@ schemas/
   quote.py                  QuoteMessage + DeliveryPayload
 
 scripts/
-  run_demo.py               in-process demo, all stubs
+  run_demo.py               in-process demo with deterministic proof refs
+  generate_market_trace.py  builds the visual demo board data
   run_axl_demo.py           full AXL P2P integration demo
   axl_mock_node.py          mock AXL node (topology/send/recv)
   deploy_contracts.sh       foundry deploy to Anvil

@@ -1,7 +1,7 @@
 [project]
 name = "agentbazaar"
 version = "0.1.0"
-description = "Decentralized spot market protocol for AI agent commerce"
+description = "AI task exchange for idle agent capacity"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.6",

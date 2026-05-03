@@ -5,7 +5,7 @@ End-to-end sequence:
   1. Build + sign an RFQMessage.
   2. Broadcast over AXL (Gensyn).
   3. Collect quotes for a fixed window, rank them, pick the winner.
-  4. Uniswap swap into USDC → fire KeeperHub lock workflow.
+  4. Get a real Uniswap quote proof → fire KeeperHub lock workflow.
   5. Wait for the seller's confirmDelivery event over AXL.
   6. Validate delivery schema.
   7. releaseFunds via KeeperHub + submit ERC-8004 feedback.
@@ -41,6 +41,16 @@ log = logging.getLogger(__name__)
 def _content_hash(content: dict[str, object]) -> str:
     canonical = json.dumps(content, sort_keys=True, separators=(",", ":")).encode()
     return "0x" + hashlib.sha3_256(canonical).hexdigest()
+
+
+def _new_rfq_id() -> str:
+    return "0x" + uuid.uuid4().hex.ljust(64, "0")[:64]
+
+
+def _rfq_id_bytes(rfq_id: str) -> bytes:
+    if rfq_id.startswith("0x") and len(rfq_id) == 66:
+        return bytes.fromhex(rfq_id[2:])
+    return bytes.fromhex(rfq_id.replace("-", "").ljust(64, "0")[:64])
 
 
 class BuyerAgent:
@@ -92,14 +102,14 @@ class BuyerAgent:
             raise RuntimeError("no eligible quote for this RFQ")
         log.info("winner: %s @ %d atomic USDC", winner.seller_agent_id, winner.quote_price_atomic)
 
-        swap_tx, lock_tx = await self._swap_and_lock(winner)
+        quote_ref, lock_tx = await self._quote_and_lock(winner)
         delivery = await self._await_delivery(winner)
         release_tx = await self._release(winner, delivery)
         feedback_tx = self._submit_feedback(winner, outcome="SUCCESS")
 
         return {
             "rfq_id": rfq.rfq_id,
-            "uniswap_swap_tx": swap_tx,
+            "uniswap_quote_ref": quote_ref,
             "lock_tx": lock_tx,
             "release_tx": release_tx,
             "feedback_tx": feedback_tx,
@@ -115,7 +125,7 @@ class BuyerAgent:
         budget_atomic: int,
     ) -> RFQMessage:
         rfq = RFQMessage(
-            rfq_id=str(uuid.uuid4()),
+            rfq_id=_new_rfq_id(),
             buyer_agent_id=self.agent_id,
             buyer_axl_peer_id=self.verify_key_hex,
             task=Task(
@@ -157,29 +167,34 @@ class BuyerAgent:
             pass
         return quotes
 
-    async def _swap_and_lock(self, quote: QuoteMessage) -> tuple[str, str]:
-        # Step 1: Uniswap swap → get USDC  [TxID #1]
-        swap = await self.uniswap.bridge_to_usdc(
-            input_token="0x4200000000000000000000000000000000000006",  # WETH on Base
-            amount_in=quote.quote_price_atomic * 10**12,
+    async def _quote_and_lock(self, quote: QuoteMessage) -> tuple[str, str]:
+        # Step 1: real Uniswap quote proof. MockUSDC settlement is separate.
+        uniswap_quote = await self.uniswap.quote(
+            token_in=self.cfg.uniswap_input_token,
+            token_out=self.cfg.uniswap_output_token,
+            amount_in=self.cfg.uniswap_quote_amount,
             wallet_address=self.cfg.wallet_address,
-            usdc_address="0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",  # USDC on Base
+            chain_id=self.cfg.uniswap_chain_id,
         )
-        log.info("uniswap swap tx: %s", swap.tx_hash)
+        log.info(
+            "uniswap quote id: %s amount_out=%d",
+            uniswap_quote.quote_id,
+            uniswap_quote.amount_out,
+        )
 
-        # Step 2: KeeperHub lock workflow  [TxID #2]
+        # Step 2: KeeperHub lock workflow  [ExecutionID / TxID #2]
         run = await self.keeperhub.fire_lock(
-            self.cfg.keeperhub_workflow_lock,
+            self.cfg.keeperhub_workflow_lock_webhook or self.cfg.keeperhub_workflow_lock,
             rfq_id=quote.rfq_id,
             seller=quote.seller_agent_id,
             amount=quote.quote_price_atomic,
             token=self.cfg.usdc_address,
         )
-        settled = await self.keeperhub.wait_for_tx(run.run_id)
-        if settled.tx_hash is None:
-            raise RuntimeError(f"lock failed: {settled.error}")
-        log.info("escrow lock tx: %s", settled.tx_hash)
-        return swap.tx_hash, settled.tx_hash
+        lock_ref = run.tx_hash or run.run_id
+        if not lock_ref:
+            raise RuntimeError(f"lock workflow failed to start: {run.error}")
+        log.info("escrow lock workflow: %s", lock_ref)
+        return uniswap_quote.quote_id or "uniswap-quote", lock_ref
 
     async def _await_delivery(self, quote: QuoteMessage) -> DeliveryPayload:
         async for msg in self.axl.inbox():
@@ -199,25 +214,30 @@ class BuyerAgent:
     async def _release(self, quote: QuoteMessage, payload: DeliveryPayload) -> str:
         # Fire KeeperHub release webhook  [TxID #3]
         run = await self.keeperhub.fire_optimistic_release(
-            self.cfg.keeperhub_workflow_release,
+            self.cfg.keeperhub_workflow_release_webhook or self.cfg.keeperhub_workflow_release,
             rfq_id=quote.rfq_id,
         )
-        settled = await self.keeperhub.wait_for_tx(run.run_id)
-        if settled.tx_hash is None:
-            # Fallback: release directly
-            rfq_bytes = bytes.fromhex(quote.rfq_id.replace("-", "").ljust(64, "0")[:64])
-            return self.escrow.release_funds(rfq_bytes)
-        return settled.tx_hash
+        if run.tx_hash or run.run_id:
+            return run.tx_hash or run.run_id
+
+        rfq_bytes = _rfq_id_bytes(quote.rfq_id)
+        return self.escrow.release_funds(rfq_bytes)
 
     def _submit_feedback(self, quote: QuoteMessage, *, outcome: str) -> str:
         # ERC-8004 on-chain feedback  [TxID #4]
+        if not self.erc8004.configured:
+            log.info("ERC-8004 registries not configured; skipping feedback")
+            return "erc8004-skipped"
         rating = 5 if outcome == "SUCCESS" else 1
         agent_id = self.erc8004.agent_id_of(quote.seller_agent_id)
+        if agent_id == 0:
+            log.info("seller has no ERC-8004 agent id; skipping feedback")
+            return "erc8004-skipped"
         return self.erc8004.submit_feedback(
             agent_id=agent_id,
             rating=rating,
             tags=["fast", "accurate"] if outcome == "SUCCESS" else ["disputed"],
-            proof_uri=f"agentbazaar://rfq/{quote.rfq_id}",
+            proof_uri=f"agent-bazaar://rfq/{quote.rfq_id}",
         )
 
     async def aclose(self) -> None:

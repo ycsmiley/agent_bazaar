@@ -33,9 +33,16 @@ class Config:
     keeperhub_workflow_lock: str
     keeperhub_workflow_release: str
     keeperhub_workflow_refund: str
+    keeperhub_workflow_lock_webhook: str
+    keeperhub_workflow_release_webhook: str
+    keeperhub_workflow_refund_webhook: str
     # Uniswap
     uniswap_api_base: str
     uniswap_api_key: str
+    uniswap_chain_id: int
+    uniswap_input_token: str
+    uniswap_output_token: str
+    uniswap_quote_amount: int
     # Identity (per-agent overrides from CLI)
     wallet_address: str
     private_key: str | None
@@ -77,8 +84,18 @@ def load_config(
         keeperhub_workflow_lock=_get("KEEPERHUB_WORKFLOW_LOCK"),
         keeperhub_workflow_release=_get("KEEPERHUB_WORKFLOW_RELEASE"),
         keeperhub_workflow_refund=_get("KEEPERHUB_WORKFLOW_REFUND"),
+        keeperhub_workflow_lock_webhook=_get("KEEPERHUB_WORKFLOW_LOCK_WEBHOOK"),
+        keeperhub_workflow_release_webhook=_get("KEEPERHUB_WORKFLOW_RELEASE_WEBHOOK"),
+        keeperhub_workflow_refund_webhook=_get("KEEPERHUB_WORKFLOW_REFUND_WEBHOOK"),
         uniswap_api_base=_get("UNISWAP_API_BASE", "https://trade-api.gateway.uniswap.org/v1"),
         uniswap_api_key=_get("UNISWAP_API_KEY"),
+        uniswap_chain_id=int(_get("UNISWAP_CHAIN_ID", _get("CHAIN_ID", "84532"))),
+        uniswap_input_token=_get(
+            "UNISWAP_INPUT_TOKEN",
+            "0x4200000000000000000000000000000000000006",
+        ),
+        uniswap_output_token=_get("UNISWAP_OUTPUT_TOKEN", _get("USDC_ADDRESS")),
+        uniswap_quote_amount=int(_get("UNISWAP_QUOTE_AMOUNT", "1000000000000000")),
         wallet_address=wallet,
         private_key=pk,
     )

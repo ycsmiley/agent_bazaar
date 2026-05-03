@@ -8,14 +8,16 @@ through the full message sequence:
   1.  Buyer broadcasts RFQ over AXL
   2.  Seller receives, validates, builds and signs a Quote
   3.  Seller sends Quote back over AXL
-  4.  Buyer picks the winner, (stubs) escrow lock
+  4.  Buyer picks the winner, records a Uniswap quote proof, and locks escrow
   5.  Buyer sends "locked" trigger to seller over AXL
-  6.  Seller executes task, hashes result, (stubs) confirmDelivery
+  6.  Seller executes task, hashes result, and confirms delivery
   7.  Seller sends DeliveryPayload back over AXL
   8.  Buyer validates content hash — trade complete
 
-On-chain calls (Uniswap swap, KeeperHub lock, releaseFunds, ERC-8004)
-are stubbed to fake TxIDs so the demo runs without external services.
+External calls are represented with deterministic demo refs so this AXL-only
+script runs without sponsor credentials. The live/testnet path uses real
+KeeperHub workflows, escrow transactions, ERC-8004 registries, and Uniswap
+quote API responses.
 """
 from __future__ import annotations
 
@@ -127,11 +129,11 @@ async def run_buyer(
         f"rep={quote.erc8004_reputation.success_rate:.1%}"
     )
 
-    # Stub Uniswap swap + KeeperHub lock
-    swap_tx   = "0x" + "11" * 32
-    lock_tx   = "0x" + "22" * 32
-    console.print(f"[dim]  Uniswap swap tx : {swap_tx[:20]}…[/]")
-    console.print(f"[dim]  Escrow lock tx  : {lock_tx[:20]}…[/]")
+    # Demo refs for Uniswap quote proof + KeeperHub lock.
+    quote_ref = "quote_52cdda69-9996-4b58-9101-d1451f44d8f0"
+    lock_tx = "0x" + "22" * 32
+    console.print(f"[dim]  Uniswap quote  : {quote_ref}[/]")
+    console.print(f"[dim]  Escrow lock tx : {lock_tx[:20]}…[/]")
 
     # 3. Send "locked" trigger to seller
     trigger = {
@@ -174,7 +176,7 @@ async def run_buyer(
     await axl.aclose()
     return {
         "rfq_id": rfq_signed.rfq_id,
-        "uniswap_swap_tx":  swap_tx,
+        "uniswap_quote_ref": quote_ref,
         "lock_tx":          lock_tx,
         "release_tx":       release_tx,
         "feedback_tx":      feedback_tx,
@@ -231,7 +233,7 @@ async def run_seller(
                 "pair": task_input.get("pair", "ETH/USDC"),
                 "price": 3412.15,
                 "volume_24h": 1_234_567_890,
-                "source": "agentbazaar-seller",
+                "source": "agent-bazaar-seller",
                 "timestamp": int(time.time()),
             }
             import hashlib
@@ -261,8 +263,11 @@ async def run_seller(
 async def main() -> None:
     logging.basicConfig(level=logging.WARNING)
     console.print(Panel.fit(
-        "AgentBazaar — AXL P2P Integration Demo",
-        subtitle="Gensyn AXL transport · Uniswap swap · KeeperHub escrow · ERC-8004 reputation",
+        "Agent Bazaar — AXL P2P Integration Demo",
+        subtitle=(
+            "Gensyn AXL transport · Uniswap quote proof · "
+            "KeeperHub escrow · ERC-8004 reputation"
+        ),
         style="bold magenta",
     ))
 

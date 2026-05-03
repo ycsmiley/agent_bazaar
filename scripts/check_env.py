@@ -77,7 +77,7 @@ def main() -> int:
     rpc_url = env.get("RPC_URL", "")
     local_chain = chain_id == "31337" or "127.0.0.1" in rpc_url or "localhost" in rpc_url
 
-    print("AgentBazaar environment check")
+    print("Agent Bazaar environment check")
     print(f"- Mode: {'local/anvil' if local_chain else 'testnet/live candidate'}")
     print(f"- CHAIN_ID: {chain_id or 'missing'}")
     print(f"- RPC_URL: {rpc_url or 'missing'}")

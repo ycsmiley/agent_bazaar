@@ -95,24 +95,43 @@ class Erc8004Client:
         self.w3 = w3
         self.sender = Web3.to_checksum_address(sender)
         self._pk = private_key
-        self.identity = w3.eth.contract(
-            address=Web3.to_checksum_address(identity_registry), abi=IDENTITY_ABI
+        self.identity_address = identity_registry
+        self.reputation_address = reputation_registry
+        self.identity = (
+            w3.eth.contract(address=Web3.to_checksum_address(identity_registry), abi=IDENTITY_ABI)
+            if identity_registry
+            else None
         )
-        self.reputation = w3.eth.contract(
-            address=Web3.to_checksum_address(reputation_registry), abi=REPUTATION_ABI
+        self.reputation = (
+            w3.eth.contract(
+                address=Web3.to_checksum_address(reputation_registry),
+                abi=REPUTATION_ABI,
+            )
+            if reputation_registry
+            else None
         )
+
+    @property
+    def configured(self) -> bool:
+        return self.identity is not None and self.reputation is not None
 
     # ───── identity ────────────────────────────────────────────────────
 
     def register_agent(self, agent_card_uri: str) -> str:
+        if self.identity is None:
+            raise RuntimeError("ERC-8004 identity registry not configured")
         return self._send(self.identity.functions.registerAgent(agent_card_uri))
 
     def agent_id_of(self, owner: str) -> int:
+        if self.identity is None:
+            raise RuntimeError("ERC-8004 identity registry not configured")
         return int(
             self.identity.functions.agentIdOf(Web3.to_checksum_address(owner)).call()
         )
 
     def agent_card_uri(self, agent_id: int) -> str:
+        if self.identity is None:
+            raise RuntimeError("ERC-8004 identity registry not configured")
         return self.identity.functions.tokenURI(agent_id).call()
 
     # ───── reputation ──────────────────────────────────────────────────
@@ -125,6 +144,8 @@ class Erc8004Client:
         tags: list[str],
         proof_uri: str,
     ) -> str:
+        if self.reputation is None:
+            raise RuntimeError("ERC-8004 reputation registry not configured")
         if not 0 <= rating <= 5:
             raise ValueError("rating must be 0..5")
         return self._send(
@@ -132,6 +153,8 @@ class Erc8004Client:
         )
 
     def get_reputation(self, agent_id: int) -> ReputationView:
+        if self.reputation is None:
+            raise RuntimeError("ERC-8004 reputation registry not configured")
         total, success, avg_bps = self.reputation.functions.getReputation(agent_id).call()
         return ReputationView(
             total_tasks=int(total),

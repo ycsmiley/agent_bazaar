@@ -36,6 +36,12 @@ def _content_hash(content: dict[str, object]) -> str:
     return "0x" + hashlib.sha3_256(canonical).hexdigest()
 
 
+def _rfq_id_bytes(rfq_id: str) -> bytes:
+    if rfq_id.startswith("0x") and len(rfq_id) == 66:
+        return bytes.fromhex(rfq_id[2:])
+    return bytes.fromhex(rfq_id.replace("-", "").ljust(64, "0")[:64])
+
+
 class SellerAgent:
     def __init__(
         self,
@@ -132,7 +138,7 @@ class SellerAgent:
         elapsed_ms = int((time.perf_counter() - start) * 1000)
 
         result_hash = _content_hash(content)
-        rfq_bytes = bytes.fromhex(rfq_id.replace("-", "").ljust(64, "0")[:64])
+        rfq_bytes = _rfq_id_bytes(rfq_id)
         tx_hash = self.escrow.confirm_delivery(rfq_bytes, bytes.fromhex(result_hash[2:]))
         log.info("confirmDelivery tx=%s elapsed=%dms", tx_hash, elapsed_ms)
 

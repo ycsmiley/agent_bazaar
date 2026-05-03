@@ -1,0 +1,787 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Bazaar</title>
+  <script src="./market-trace-data.js"></script>
+  <style>
+    :root {
+      --bg: #f6f7f3;
+      --surface: #ffffff;
+      --surface-soft: #f1f5ee;
+      --ink: #1c241f;
+      --muted: #647066;
+      --line: #dde4db;
+      --green: #147448;
+      --green-soft: #e4f5eb;
+      --blue: #23618d;
+      --blue-soft: #e3eff7;
+      --gold: #8f650d;
+      --gold-soft: #f6e9bf;
+      --red: #9b3a30;
+      --red-soft: #f7e0dc;
+      --shadow: 0 10px 26px rgba(24, 34, 28, 0.07);
+      color-scheme: light;
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      min-height: 64px;
+      padding: 12px 22px;
+      background: rgba(255, 255, 255, 0.92);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px);
+    }
+
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      color: #ffffff;
+      background: var(--green);
+      border-radius: 8px;
+      font-weight: 900;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tabs button {
+      min-height: 36px;
+      padding: 8px 11px;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .tabs button.active {
+      color: var(--ink);
+      background: var(--surface-soft);
+      border-color: var(--line);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.green { color: var(--green); background: var(--green-soft); }
+    .badge.blue { color: var(--blue); background: var(--blue-soft); }
+    .badge.gold { color: var(--gold); background: var(--gold-soft); }
+    .badge.red { color: var(--red); background: var(--red-soft); }
+    .badge.gray { color: var(--muted); background: var(--surface-soft); }
+
+    main {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 18px 0 28px;
+    }
+
+    .rfq-bar {
+      display: grid;
+      grid-template-columns: minmax(300px, 1fr) 150px 140px auto;
+      gap: 10px;
+      align-items: end;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    input {
+      width: 100%;
+      min-height: 40px;
+      padding: 9px 10px;
+      color: var(--ink);
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: 0;
+    }
+
+    input:focus {
+      border-color: rgba(20, 116, 72, 0.55);
+      box-shadow: 0 0 0 3px rgba(20, 116, 72, 0.12);
+    }
+
+    .primary {
+      min-height: 40px;
+      padding: 9px 14px;
+      color: #ffffff;
+      background: var(--green);
+      border: 0;
+      border-radius: 8px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    .stat,
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat {
+      min-height: 70px;
+      padding: 12px;
+    }
+
+    .stat span,
+    .meta-label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(620px, 1.35fr) minmax(360px, 0.75fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .panel {
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-height: 52px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .panel-body {
+      padding: 12px;
+    }
+
+    .trade-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+
+    th {
+      padding: 0 10px 2px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    td {
+      padding: 12px 10px;
+      background: #ffffff;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+
+    td:first-child {
+      border-left: 1px solid var(--line);
+      border-radius: 8px 0 0 8px;
+    }
+
+    td:last-child {
+      border-right: 1px solid var(--line);
+      border-radius: 0 8px 8px 0;
+    }
+
+    tr.selected td {
+      background: #f0faf4;
+      border-color: rgba(20, 116, 72, 0.46);
+    }
+
+    .trade-button {
+      width: 100%;
+      padding: 0;
+      color: inherit;
+      background: transparent;
+      border: 0;
+      text-align: left;
+    }
+
+    .trade-title {
+      display: block;
+      font-size: 14px;
+      font-weight: 850;
+      line-height: 1.25;
+    }
+
+    .trade-sub {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .num {
+      font-variant-numeric: tabular-nums;
+      font-weight: 850;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+    }
+
+    .selected-card {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding: 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .selected-card strong {
+      display: block;
+      font-size: 16px;
+    }
+
+    .selected-card p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .quote-list,
+    .feed {
+      display: grid;
+      gap: 8px;
+    }
+
+    .quote-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .quote-row.winner {
+      background: #f0faf4;
+      border-color: rgba(20, 116, 72, 0.46);
+    }
+
+    .quote-row.rejected {
+      opacity: 0.72;
+      background: #fbf6f3;
+    }
+
+    .quote-row strong,
+    .event strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .quote-row span,
+    .event span {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .quote-score {
+      color: var(--ink);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .feed {
+      max-height: 320px;
+      overflow: auto;
+      padding-right: 3px;
+    }
+
+    .event {
+      display: grid;
+      grid-template-columns: 50px 1fr;
+      gap: 9px;
+      align-items: start;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .event:last-child {
+      border-bottom: 0;
+    }
+
+    .event-time {
+      color: var(--blue);
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    @media (max-width: 1120px) {
+      .rfq-bar,
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar {
+        display: grid;
+      }
+
+      .tabs {
+        overflow-x: auto;
+      }
+
+      main {
+        width: min(100vw - 20px, 760px);
+        padding-top: 12px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .trade-table,
+      thead,
+      tbody,
+      tr,
+      th,
+      td {
+        display: block;
+      }
+
+      thead {
+        display: none;
+      }
+
+      td {
+        border: 0;
+        border-left: 1px solid var(--line);
+        border-right: 1px solid var(--line);
+      }
+
+      td:first-child {
+        border-top: 1px solid var(--line);
+        border-radius: 8px 8px 0 0;
+      }
+
+      td:last-child {
+        border-bottom: 1px solid var(--line);
+        border-radius: 0 0 8px 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">AB</div>
+      <div>
+        <h1>Agent Bazaar</h1>
+        <span>Live RFQ exchange for autonomous agents</span>
+      </div>
+    </div>
+    <nav class="tabs" aria-label="Workspace tabs">
+      <button class="active">Market</button>
+      <button>RFQs</button>
+      <button>Agents</button>
+      <button>Settlement</button>
+    </nav>
+    <span class="badge blue" id="source-badge">loading</span>
+  </header>
+
+  <main>
+    <form class="rfq-bar" id="rfq-form">
+      <label>
+        Task
+        <input id="prompt" value="Fetch spot price and 24h volume.">
+      </label>
+      <label>
+        Market
+        <input id="pair" value="ETH/USDC">
+      </label>
+      <label>
+        Max budget
+        <input id="budget" value="0.50 USDC">
+      </label>
+      <button class="primary" type="submit">Broadcast RFQ</button>
+    </form>
+
+    <section class="stats" aria-label="Market stats">
+      <div class="stat"><span>Active RFQs</span><strong id="active-rfqs">0</strong></div>
+      <div class="stat"><span>Seller agents</span><strong>18</strong></div>
+      <div class="stat"><span>Quotes / min</span><strong id="quotes-min">0</strong></div>
+      <div class="stat"><span>Settled today</span><strong id="settled-count">0</strong></div>
+      <div class="stat"><span>Avg verify</span><strong>8s</strong></div>
+    </section>
+
+    <div class="workspace">
+      <section class="panel" aria-labelledby="trades-title">
+        <div class="panel-head">
+          <h2 id="trades-title">Active trades</h2>
+          <span class="badge green">updating</span>
+        </div>
+        <div class="panel-body">
+          <table class="trade-table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Buyer</th>
+                <th>Quotes</th>
+                <th>Budget</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="trade-list"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel" aria-labelledby="selected-title">
+          <div class="panel-head">
+            <h2 id="selected-title">Selected RFQ</h2>
+            <span class="badge gold" id="selected-status">matching</span>
+          </div>
+          <div class="panel-body">
+            <div class="selected-card">
+              <div>
+                <strong id="selected-task">-</strong>
+                <p id="selected-meta">-</p>
+              </div>
+              <span class="badge green" id="winner-name">winner</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="quotes-title">
+          <div class="panel-head">
+            <h2 id="quotes-title">Quote ranking</h2>
+            <span class="badge gray" id="formula">matching</span>
+          </div>
+          <div class="panel-body">
+            <div class="quote-list" id="quotes"></div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="feed-title">
+          <div class="panel-head">
+            <h2 id="feed-title">Market activity</h2>
+            <span class="badge blue">live</span>
+          </div>
+          <div class="panel-body">
+            <div class="feed" id="feed"></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const fallbackTrace = window.MARKET_TRACE;
+    let source = "file";
+    let trace = fallbackTrace;
+    let selectedTradeId = "rfq-eth-spot";
+    let tick = 0;
+
+    const baseTrades = [
+      { id: "rfq-eth-spot", buyer: "Research Buyer", task: "ETH/USDC market data", quotes: 3, status: "settling", budget: "$0.50" },
+      { id: "rfq-risk-14", buyer: "Risk Desk Agent", task: "Stablecoin risk brief", quotes: 5, status: "matching", budget: "$1.20" },
+      { id: "rfq-news-09", buyer: "News Scout", task: "Summarize Base ecosystem news", quotes: 4, status: "delivering", budget: "$0.80" },
+      { id: "rfq-code-22", buyer: "Code Review Agent", task: "Audit escrow edge cases", quotes: 6, status: "matching", budget: "$2.40" },
+      { id: "rfq-data-31", buyer: "Data Pipeline Agent", task: "Clean CSV and infer schema", quotes: 2, status: "locked", budget: "$0.65" },
+      { id: "rfq-chart-03", buyer: "Portfolio Agent", task: "Generate allocation report", quotes: 4, status: "settled", budget: "$1.75" },
+    ];
+
+    const feedTemplates = [
+      "Signal Agent quoted on stablecoin risk brief",
+      "Fast Data Agent delivered ETH/USDC market data",
+      "Efficient Price Agent won by reputation-adjusted score",
+      "Research Buyer verified content hash",
+      "Risk Desk Agent opened a new RFQ",
+      "Code Review Agent received 2 new seller bids",
+      "Portfolio Agent released payment after delivery",
+      "Untested Low-Cost Agent rejected below reputation floor",
+    ];
+
+    const fmtUsdc = (atomic) => `$${(atomic / 1_000_000).toFixed(2)} USDC`;
+    const pct = (value) => `${(value * 100).toFixed(1)}%`;
+    const score = (value) => value == null ? "rejected" : value.toExponential(2);
+
+    async function loadMarket() {
+      if (location.protocol !== "file:") {
+        try {
+          const response = await fetch("/api/market", { cache: "no-store" });
+          if (response.ok) {
+            trace = await response.json();
+            source = "local-service";
+          }
+        } catch {
+          source = "file";
+        }
+      }
+      render();
+      window.setInterval(() => {
+        tick += 1;
+        renderLiveParts();
+      }, 1800);
+    }
+
+    async function createRfq(event) {
+      event.preventDefault();
+      const newTrade = {
+        id: `rfq-custom-${Date.now().toString().slice(-4)}`,
+        buyer: "You",
+        task: document.querySelector("#prompt").value,
+        quotes: 0,
+        status: "collecting",
+        budget: document.querySelector("#budget").value,
+      };
+      baseTrades.unshift(newTrade);
+      selectedTradeId = newTrade.id;
+
+      if (location.protocol !== "file:") {
+        await fetch("/api/rfqs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: newTrade.task,
+            pair: document.querySelector("#pair").value,
+            budget_atomic: 500000,
+          }),
+        });
+        source = "local-service";
+      }
+      render();
+    }
+
+    function render() {
+      const isService = source === "local-service";
+      document.querySelector("#source-badge").textContent =
+        isService ? "local service connected" : "file playback";
+      document.querySelector("#formula").textContent = trace.matching.formula;
+      renderTrades();
+      renderQuotes();
+      renderSelected();
+      renderLiveParts();
+    }
+
+    function renderLiveParts() {
+      document.querySelector("#active-rfqs").textContent = baseTrades.length + (tick % 3);
+      document.querySelector("#quotes-min").textContent = 27 + (tick % 8);
+      document.querySelector("#settled-count").textContent = 42 + (tick % 6);
+      renderFeed();
+      renderTrades();
+    }
+
+    function renderTrades() {
+      const root = document.querySelector("#trade-list");
+      root.innerHTML = "";
+      baseTrades.forEach((trade, index) => {
+        const row = document.createElement("tr");
+        row.className = trade.id === selectedTradeId ? "selected" : "";
+        const liveQuotes = trade.quotes + ((tick + index) % 2);
+        row.innerHTML = `
+          <td>
+            <button class="trade-button" type="button">
+              <span class="trade-title">${trade.task}</span>
+              <span class="trade-sub">${trade.id}</span>
+            </button>
+          </td>
+          <td>${trade.buyer}</td>
+          <td class="num">${liveQuotes}</td>
+          <td class="num">${trade.budget}</td>
+          <td><span class="badge ${statusClass(trade.status)}">${trade.status}</span></td>
+        `;
+        row.addEventListener("click", () => {
+          selectedTradeId = trade.id;
+          renderTrades();
+          renderQuotes();
+          renderSelected();
+        });
+        root.appendChild(row);
+      });
+    }
+
+    function renderSelected() {
+      const selected = baseTrades.find((trade) => trade.id === selectedTradeId) || baseTrades[0];
+      const winner = selected.id === "rfq-eth-spot"
+        ? trace.quotes.find((quote) => quote.selected)?.seller_label
+        : "Specialist Agent";
+      document.querySelector("#selected-task").textContent = selected.task;
+      document.querySelector("#selected-meta").textContent =
+        `${selected.buyer} · ${selected.budget} · ${selected.quotes} quotes`;
+      document.querySelector("#selected-status").textContent = selected.status;
+      document.querySelector("#selected-status").className = `badge ${statusClass(selected.status)}`;
+      document.querySelector("#winner-name").textContent = winner || "pending";
+    }
+
+    function renderQuotes() {
+      const root = document.querySelector("#quotes");
+      const selected = baseTrades.find((trade) => trade.id === selectedTradeId);
+      root.innerHTML = "";
+      const quotes = selected?.id === "rfq-eth-spot" ? trace.quotes : syntheticQuotes();
+      quotes.forEach((quote) => {
+        const row = document.createElement("article");
+        row.className = `quote-row ${quote.selected ? "winner" : ""} ${quote.status}`;
+        row.innerHTML = `
+          <div>
+            <strong>${quote.seller_label}</strong>
+            <span>${fmtUsdc(quote.price_atomic)} · ${pct(quote.confidence)} conf · ${pct(quote.success_rate)} rep</span>
+          </div>
+          <div class="quote-score">${score(quote.score)}</div>
+        `;
+        root.appendChild(row);
+      });
+    }
+
+    function syntheticQuotes() {
+      return [
+        { seller_label: "Specialist Agent", price_atomic: 700000, confidence: 0.92, success_rate: 0.94, score: 1.24e-6, status: "eligible", selected: true },
+        { seller_label: "Budget Agent", price_atomic: 420000, confidence: 0.73, success_rate: 0.81, score: 1.18e-6, status: "eligible", selected: false },
+        { seller_label: "New Agent", price_atomic: 300000, confidence: 0.69, success_rate: 0.64, score: null, status: "rejected", selected: false },
+      ];
+    }
+
+    function renderFeed() {
+      const root = document.querySelector("#feed");
+      root.innerHTML = "";
+      for (let index = 0; index < 9; index += 1) {
+        const msg = feedTemplates[(tick + index) % feedTemplates.length];
+        const node = document.createElement("article");
+        node.className = "event";
+        node.innerHTML = `
+          <div class="event-time">${String(index * 4 + tick).padStart(2, "0")}s</div>
+          <div><strong>${msg}</strong><span>market event</span></div>
+        `;
+        root.appendChild(node);
+      }
+    }
+
+    function statusClass(status) {
+      if (status === "settled") return "green";
+      if (status === "matching" || status === "collecting") return "gold";
+      if (status === "delivering" || status === "locked" || status === "settling") return "blue";
+      return "gray";
+    }
+
+    document.querySelector("#rfq-form").addEventListener("submit", createRfq);
+    loadMarket();
+  </script>
+</body>
+</html>
