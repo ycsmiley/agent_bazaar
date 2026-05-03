@@ -41,6 +41,7 @@ The offline demo is deterministic and uses stub transaction hashes for recording
 - Contact info: TODO — add Telegram and X handles.
 - AI usage disclosure: see [`AI_USAGE.md`](AI_USAGE.md).
 - New vs reused work: see [`HACKATHON_NOTES.md`](HACKATHON_NOTES.md).
+- Development process and team direction: see [`DEVELOPMENT_PROCESS.md`](DEVELOPMENT_PROCESS.md).
 - Gensyn AXL notes: see [`GENSYN_AXL.md`](GENSYN_AXL.md).
 
 ## Deployment Addresses

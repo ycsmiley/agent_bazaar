@@ -16,6 +16,9 @@ Key new components include:
 - Agent Bazaar live market screen and local demo service.
 - Sponsor feedback artifacts and submission notes.
 
+See [`DEVELOPMENT_PROCESS.md`](DEVELOPMENT_PROCESS.md) for the team-directed
+planning and AI-assistance disclosure.
+
 ## Reused Open-Source Libraries
 
 The project uses public libraries and standard tooling rather than custom forks:

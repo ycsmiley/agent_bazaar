@@ -27,8 +27,17 @@ as a replacement for team direction.
 - AI-generated code and documents were reviewed, edited, tested, and adjusted
   inside the repository before submission.
 
+## Spec-Driven Development
+
+This project did not use a formal spec-driven framework such as OpenSpec, Kiro,
+or spec-kit. The planning process was conversational and team-directed. A
+sanitized summary of the team direction and planning artifacts is included in
+[`DEVELOPMENT_PROCESS.md`](DEVELOPMENT_PROCESS.md).
+
 ## Artifacts
 
 - Source code and tests are in this repository.
 - The main implementation history is tracked through Git commits and working
   tree changes during the hackathon.
+- Additional process notes are in [`DEVELOPMENT_PROCESS.md`](DEVELOPMENT_PROCESS.md)
+  and [`HACKATHON_NOTES.md`](HACKATHON_NOTES.md).

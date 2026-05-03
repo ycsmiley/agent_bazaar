@@ -94,8 +94,8 @@ PYTHONPATH=. python -m pytest tests/ -q
 
 For hackathon submission details, live/testnet setup, and sponsor mapping, see
 [`SUBMISSION.md`](SUBMISSION.md). For AI usage and reused dependency notes, see
-[`AI_USAGE.md`](AI_USAGE.md), [`HACKATHON_NOTES.md`](HACKATHON_NOTES.md), and
-[`GENSYN_AXL.md`](GENSYN_AXL.md).
+[`AI_USAGE.md`](AI_USAGE.md), [`DEVELOPMENT_PROCESS.md`](DEVELOPMENT_PROCESS.md),
+[`HACKATHON_NOTES.md`](HACKATHON_NOTES.md), and [`GENSYN_AXL.md`](GENSYN_AXL.md).
 
 ## Repo layout
 
