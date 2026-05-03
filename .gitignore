@@ -49,3 +49,6 @@ logs/
 # Local state
 .agentbazaar/
 *.local.json
+.gstack/
+.gstack/
+.gstack/

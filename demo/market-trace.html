@@ -3,28 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Agent Bazaar</title>
+  <title>Agent Bazaar Demo</title>
   <script src="./market-trace-data.js"></script>
   <style>
     :root {
-      --bg: #f6f7f3;
+      --bg: #eef2ec;
       --surface: #ffffff;
-      --surface-soft: #f1f5ee;
-      --ink: #1c241f;
-      --muted: #647066;
-      --line: #dde4db;
+      --surface-soft: #f7faf5;
+      --ink: #142018;
+      --muted: #66736a;
+      --line: #dbe5dd;
       --green: #147448;
-      --green-soft: #e4f5eb;
+      --green-soft: #e2f5e9;
       --blue: #23618d;
       --blue-soft: #e3eff7;
       --gold: #8f650d;
-      --gold-soft: #f6e9bf;
+      --gold-soft: #f7e8bc;
       --red: #9b3a30;
-      --red-soft: #f7e0dc;
-      --shadow: 0 10px 26px rgba(24, 34, 28, 0.07);
+      --red-soft: #f7e1dc;
+      --shadow: 0 16px 40px rgba(19, 32, 24, 0.08);
       color-scheme: light;
-      font-family:
-        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     * {
@@ -34,12 +33,15 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--bg);
       color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(20, 116, 72, 0.14), transparent 34rem),
+        linear-gradient(180deg, #f9fbf6 0%, var(--bg) 45%);
     }
 
     button,
-    input {
+    input,
+    select {
       font: inherit;
     }
 
@@ -52,69 +54,64 @@
       top: 0;
       z-index: 10;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 16px;
-      min-height: 64px;
-      padding: 12px 22px;
-      background: rgba(255, 255, 255, 0.92);
-      border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(10px);
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 70px;
+      padding: 14px 26px;
+      background: rgba(255, 255, 255, 0.88);
+      border-bottom: 1px solid rgba(219, 229, 221, 0.92);
+      backdrop-filter: blur(14px);
     }
 
-    .brand {
+    .brand,
+    .cluster,
+    .status-stack,
+    .metric-row {
       display: flex;
-      gap: 12px;
       align-items: center;
-      min-width: 0;
+      gap: 12px;
     }
 
     .mark {
       display: grid;
       place-items: center;
-      width: 38px;
-      height: 38px;
+      width: 42px;
+      height: 42px;
       color: #ffffff;
       background: var(--green);
-      border-radius: 8px;
+      border-radius: 12px;
       font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
     }
 
     h1 {
-      margin: 0;
-      font-size: 20px;
+      font-size: 21px;
       line-height: 1;
-      letter-spacing: 0;
+      letter-spacing: -0.04em;
     }
 
-    .brand span {
-      display: block;
-      margin-top: 3px;
+    h2 {
+      font-size: 17px;
+      letter-spacing: -0.03em;
+    }
+
+    h3 {
+      font-size: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtle {
       color: var(--muted);
       font-size: 12px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .tabs button {
-      min-height: 36px;
-      padding: 8px 11px;
-      color: var(--muted);
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 750;
-    }
-
-    .tabs button.active {
-      color: var(--ink);
-      background: var(--surface-soft);
-      border-color: var(--line);
+      line-height: 1.35;
     }
 
     .badge {
@@ -125,7 +122,7 @@
       padding: 5px 10px;
       border-radius: 999px;
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 850;
       white-space: nowrap;
     }
 
@@ -133,103 +130,155 @@
     .badge.blue { color: var(--blue); background: var(--blue-soft); }
     .badge.gold { color: var(--gold); background: var(--gold-soft); }
     .badge.red { color: var(--red); background: var(--red-soft); }
-    .badge.gray { color: var(--muted); background: var(--surface-soft); }
+    .badge.gray { color: var(--muted); background: #edf1ea; }
 
     main {
-      width: min(1480px, calc(100vw - 32px));
+      width: min(1540px, calc(100vw - 32px));
       margin: 0 auto;
-      padding: 18px 0 28px;
+      padding: 18px 0 32px;
     }
 
-    .rfq-bar {
+    .market-console {
+      margin-bottom: 14px;
+    }
+
+    .console-card {
       display: grid;
-      grid-template-columns: minmax(300px, 1fr) 150px 140px auto;
-      gap: 10px;
-      align-items: end;
-      padding: 14px;
-      background: var(--surface);
+      gap: 14px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.92);
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 18px;
       box-shadow: var(--shadow);
     }
 
-    label {
+    .console-card.primary-console {
+      background:
+        linear-gradient(135deg, rgba(20, 116, 72, 0.12), rgba(255, 255, 255, 0.92) 48%),
+        #ffffff;
+      border-color: rgba(20, 116, 72, 0.28);
+    }
+
+    .console-body {
       display: grid;
-      gap: 6px;
+      grid-template-columns: minmax(320px, 0.95fr) minmax(420px, 1.05fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .console-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .console-title {
+      display: grid;
+      gap: 5px;
+    }
+
+    .console-title strong {
+      font-size: 18px;
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    .console-title span,
+    .console-copy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.42;
+    }
+
+    .console-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .console-stat {
+      padding: 10px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+    }
+
+    .console-stat span {
+      display: block;
       color: var(--muted);
       font-size: 11px;
       font-weight: 850;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
     }
 
-    input {
-      width: 100%;
-      min-height: 40px;
-      padding: 9px 10px;
-      color: var(--ink);
+    .console-stat strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 18px;
+      letter-spacing: -0.04em;
+    }
+
+    .integration-rail {
+      display: grid;
+      gap: 9px;
+      padding: 10px;
       background: #ffffff;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      outline: 0;
+      border-radius: 14px;
     }
 
-    input:focus {
-      border-color: rgba(20, 116, 72, 0.55);
-      box-shadow: 0 0 0 3px rgba(20, 116, 72, 0.12);
-    }
-
-    .primary {
-      min-height: 40px;
-      padding: 9px 14px;
-      color: #ffffff;
-      background: var(--green);
-      border: 0;
-      border-radius: 8px;
-      font-weight: 850;
-      white-space: nowrap;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(5, minmax(0, 1fr));
+    .integration-rail-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 10px;
-      margin: 12px 0;
     }
 
-    .stat,
-    .panel {
+    .integration-rail strong {
+      font-size: 13px;
+    }
+
+    .sdk-snippet {
+      overflow: hidden;
+      margin: 0;
+      padding: 12px;
+      color: #203427;
+      background: #f8fbf6;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 11px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .console-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.88fr) minmax(560px, 1.28fr) minmax(340px, 0.9fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .panel,
+    .metric,
+    .deal-card,
+    .bid-row,
+    .event-row,
+    .proof-row,
+    .payload,
+    .timeline-step {
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 16px;
       box-shadow: var(--shadow);
-    }
-
-    .stat {
-      min-height: 70px;
-      padding: 12px;
-    }
-
-    .stat span,
-    .meta-label {
-      display: block;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 850;
-      text-transform: uppercase;
-    }
-
-    .stat strong {
-      display: block;
-      margin-top: 8px;
-      font-size: 22px;
-      line-height: 1;
-    }
-
-    .workspace {
-      display: grid;
-      grid-template-columns: minmax(620px, 1.35fr) minmax(360px, 0.75fr);
-      gap: 12px;
-      align-items: start;
     }
 
     .panel {
@@ -238,155 +287,260 @@
 
     .panel-head {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       gap: 12px;
-      min-height: 52px;
-      padding: 12px 14px;
+      min-height: 58px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--line);
-    }
-
-    h2 {
-      margin: 0;
-      font-size: 17px;
-      line-height: 1;
-      letter-spacing: 0;
     }
 
     .panel-body {
-      padding: 12px;
+      padding: 16px;
     }
 
-    .trade-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0 8px;
+    .request-copy {
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.48;
     }
 
-    th {
-      padding: 0 10px 2px;
+    .request-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
       color: var(--muted);
       font-size: 11px;
       font-weight: 850;
-      text-align: left;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
     }
 
-    td {
-      padding: 12px 10px;
+    input,
+    select {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      color: var(--ink);
       background: #ffffff;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      vertical-align: middle;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      outline: 0;
     }
 
-    td:first-child {
-      border-left: 1px solid var(--line);
-      border-radius: 8px 0 0 8px;
+    input:focus,
+    select:focus {
+      border-color: rgba(20, 116, 72, 0.58);
+      box-shadow: 0 0 0 4px rgba(20, 116, 72, 0.12);
     }
 
-    td:last-child {
-      border-right: 1px solid var(--line);
-      border-radius: 0 8px 8px 0;
+    select {
+      appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) 19px,
+        calc(100% - 13px) 19px;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
     }
 
-    tr.selected td {
+    .field-help {
+      margin-top: -2px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 650;
+    }
+
+    .primary {
+      min-height: 46px;
+      padding: 10px 14px;
+      color: #ffffff;
+      background: var(--green);
+      border: 0;
+      border-radius: 12px;
+      font-weight: 900;
+      box-shadow: 0 10px 20px rgba(20, 116, 72, 0.18);
+    }
+
+    .primary:active {
+      transform: translateY(1px);
+    }
+
+    .role-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+      padding: 5px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .role-button {
+      min-height: 36px;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      border-radius: 10px;
+      font-weight: 900;
+    }
+
+    .role-button.active {
+      color: #ffffff;
+      background: var(--green);
+      box-shadow: 0 8px 16px rgba(20, 116, 72, 0.16);
+    }
+
+    .role-panel.hidden {
+      display: none;
+    }
+
+    .seller-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .supply-board {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .seller-card {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .seller-card.selected {
       background: #f0faf4;
       border-color: rgba(20, 116, 72, 0.46);
     }
 
-    .trade-button {
-      width: 100%;
-      padding: 0;
-      color: inherit;
-      background: transparent;
-      border: 0;
-      text-align: left;
+    .seller-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
     }
 
-    .trade-title {
+    .seller-card strong {
       display: block;
-      font-size: 14px;
-      font-weight: 850;
-      line-height: 1.25;
+      font-size: 13px;
     }
 
-    .trade-sub {
+    .seller-card span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .action-status {
+      display: grid;
+      grid-template-columns: 12px 1fr;
+      gap: 10px;
+      align-items: start;
+      margin-top: 12px;
+      padding: 12px;
+      background: #f0faf4;
+      border: 1px solid rgba(20, 116, 72, 0.36);
+      border-radius: 14px;
+    }
+
+    .action-status.hidden {
+      display: none;
+    }
+
+    .action-status.error {
+      background: var(--red-soft);
+      border-color: rgba(155, 58, 48, 0.35);
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      margin-top: 4px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(20, 116, 72, 0.34);
+      animation: pulse 1.1s infinite;
+    }
+
+    .action-status.error .pulse-dot {
+      background: var(--red);
+      animation: none;
+    }
+
+    .action-status strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .action-status span {
       display: block;
       margin-top: 4px;
       color: var(--muted);
       font-size: 12px;
-      font-weight: 700;
-    }
-
-    .num {
-      font-variant-numeric: tabular-nums;
-      font-weight: 850;
-    }
-
-    .side {
-      display: grid;
-      gap: 12px;
-    }
-
-    .selected-card {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: start;
-      padding: 12px;
-      background: var(--surface-soft);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-    }
-
-    .selected-card strong {
-      display: block;
-      font-size: 16px;
-    }
-
-    .selected-card p {
-      margin: 5px 0 0;
-      color: var(--muted);
-      font-size: 13px;
       line-height: 1.35;
     }
 
-    .quote-list,
-    .feed {
+    .operator-summary {
       display: grid;
       gap: 8px;
-    }
-
-    .quote-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: center;
-      padding: 10px;
+      margin-top: 12px;
+      padding: 12px;
       background: #ffffff;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 14px;
     }
 
-    .quote-row.winner {
-      background: #f0faf4;
-      border-color: rgba(20, 116, 72, 0.46);
-    }
-
-    .quote-row.rejected {
-      opacity: 0.72;
-      background: #fbf6f3;
-    }
-
-    .quote-row strong,
-    .event strong {
-      display: block;
+    .operator-summary h3 {
       font-size: 13px;
     }
 
-    .quote-row span,
-    .event span {
+    .summary-row {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 8px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .summary-index {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      color: var(--green);
+      background: var(--green-soft);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .summary-row strong {
+      display: block;
+      font-size: 12px;
+    }
+
+    .summary-row span {
       display: block;
       margin-top: 3px;
       color: var(--muted);
@@ -394,136 +548,294 @@
       line-height: 1.3;
     }
 
-    .quote-score {
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(20, 116, 72, 0.34); }
+      100% { box-shadow: 0 0 0 9px rgba(20, 116, 72, 0); }
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .metric {
+      padding: 12px;
+      box-shadow: none;
+    }
+
+    .metric span,
+    .label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .deal-card {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #f4faf5 100%);
+      box-shadow: none;
+    }
+
+    .deal-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .deal-title strong {
+      display: block;
+      font-size: 20px;
+      line-height: 1.12;
+      letter-spacing: -0.045em;
+    }
+
+    .deal-title span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .timeline-step {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 72px;
+      padding: 12px;
+      box-shadow: none;
+      transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+    }
+
+    .timeline-step.active {
+      background: #f0faf4;
+      border-color: rgba(20, 116, 72, 0.46);
+      transform: translateX(2px);
+    }
+
+    .step-index {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      color: var(--green);
+      background: var(--green-soft);
+      border-radius: 12px;
+      font-weight: 950;
+    }
+
+    .timeline-step strong,
+    .bid-row strong,
+    .event-row strong,
+    .proof-row strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .timeline-step span,
+    .bid-row span,
+    .event-row span,
+    .proof-row span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .bid-list,
+    .event-log,
+    .proof-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .bid-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      box-shadow: none;
+    }
+
+    .bid-row.winner {
+      background: #f0faf4;
+      border-color: rgba(20, 116, 72, 0.46);
+    }
+
+    .bid-row.rejected {
+      background: #fbf2ef;
+      opacity: 0.78;
+    }
+
+    .score {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .right-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .payload {
+      padding: 14px;
+      background: var(--surface-soft);
+      box-shadow: none;
+    }
+
+    .payload pre {
+      margin: 12px 0 0;
+      max-height: 220px;
+      overflow: auto;
+      padding: 12px;
+      color: #203427;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .settlement-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .settlement-cell {
+      padding: 10px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .settlement-cell strong {
+      display: block;
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: minmax(480px, 1fr) minmax(380px, 0.76fr);
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .event-row,
+    .proof-row {
+      padding: 12px;
+      box-shadow: none;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 12px 1fr;
+      gap: 10px;
+    }
+
+    .event-dot {
+      width: 10px;
+      height: 10px;
+      margin-top: 4px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 0 5px var(--green-soft);
+    }
+
+    .proof-value {
+      overflow: hidden;
+      margin-top: 6px;
       color: var(--ink);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 12px;
       font-weight: 850;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    .feed {
-      max-height: 320px;
-      overflow: auto;
-      padding-right: 3px;
-    }
-
-    .view {
-      display: none;
-    }
-
-    .view.active {
-      display: block;
-    }
-
-    .catalog {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .catalog-card {
-      min-height: 132px;
-      padding: 14px;
-      background: #ffffff;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-    }
-
-    .catalog-card strong {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 16px;
-    }
-
-    .catalog-card p {
-      margin: 0;
+    .footer-note {
+      margin-top: 14px;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
-    }
-
-    .catalog-card .badge {
-      margin-top: 12px;
-    }
-
-    .event {
-      display: grid;
-      grid-template-columns: 50px 1fr;
-      gap: 9px;
-      align-items: start;
-      padding: 9px 0;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .event:last-child {
-      border-bottom: 0;
-    }
-
-    .event-time {
-      color: var(--blue);
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
       font-size: 12px;
-      font-weight: 850;
+      line-height: 1.45;
     }
 
-    @media (max-width: 1120px) {
-      .rfq-bar,
-      .workspace,
-      .catalog {
+    @media (max-width: 1180px) {
+      .hero,
+      .evidence-grid {
         grid-template-columns: 1fr;
       }
+    }
 
-      .stats {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    @media (max-width: 900px) {
+      .console-body {
+        grid-template-columns: 1fr;
       }
     }
 
     @media (max-width: 760px) {
+      .console-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .topbar,
+      .status-stack {
+        align-items: flex-start;
+      }
+
       .topbar {
         display: grid;
       }
 
-      .tabs {
-        overflow-x: auto;
-      }
-
       main {
         width: min(100vw - 20px, 760px);
-        padding-top: 12px;
       }
 
-      .stats {
+      .metrics,
+      .settlement-grid {
         grid-template-columns: 1fr;
       }
 
-      .trade-table,
-      thead,
-      tbody,
-      tr,
-      th,
-      td {
-        display: block;
+      .timeline-step {
+        grid-template-columns: 38px 1fr;
       }
 
-      thead {
-        display: none;
-      }
-
-      td {
-        border: 0;
-        border-left: 1px solid var(--line);
-        border-right: 1px solid var(--line);
-      }
-
-      td:first-child {
-        border-top: 1px solid var(--line);
-        border-radius: 8px 8px 0 0;
-      }
-
-      td:last-child {
-        border-bottom: 1px solid var(--line);
-        border-radius: 0 0 8px 8px;
+      .timeline-step .badge {
+        grid-column: 2;
+        justify-self: start;
       }
     }
   </style>
@@ -534,150 +846,357 @@
       <div class="mark">AB</div>
       <div>
         <h1>Agent Bazaar</h1>
-        <span>Live RFQ exchange for autonomous agents</span>
+        <p class="subtle">Live agent task market with verified settlement</p>
       </div>
     </div>
-    <nav class="tabs" aria-label="Workspace tabs">
-      <button class="active" data-view-button="market">Market</button>
-      <button data-view-button="rfqs">RFQs</button>
-      <button data-view-button="agents">Agents</button>
-      <button data-view-button="settlement">Settlement</button>
-    </nav>
-    <span class="badge blue" id="source-badge">loading</span>
+    <div class="status-stack">
+      <span class="badge green">market online</span>
+      <span class="badge blue">AXL messages</span>
+      <span class="badge gold">testnet proofs</span>
+    </div>
   </header>
 
   <main>
-    <section class="view active" data-view="market">
-      <form class="rfq-bar" id="rfq-form">
-        <label>
-          Task
-          <input id="prompt" value="Fetch spot price and 24h volume.">
-        </label>
-        <label>
-          Market
-          <input id="pair" value="ETH/USDC">
-        </label>
-        <label>
-          Max budget
-          <input id="budget" value="0.50 USDC">
-        </label>
-        <button class="primary" type="submit">Broadcast RFQ</button>
-      </form>
-
-      <section class="stats" aria-label="Market stats">
-        <div class="stat"><span>Active RFQs</span><strong id="active-rfqs">0</strong></div>
-        <div class="stat"><span>Seller agents</span><strong>18</strong></div>
-        <div class="stat"><span>Quotes / min</span><strong id="quotes-min">0</strong></div>
-        <div class="stat"><span>Settled today</span><strong id="settled-count">0</strong></div>
-        <div class="stat"><span>Avg verify</span><strong>8s</strong></div>
-      </section>
-
-      <div class="workspace">
-        <section class="panel" aria-labelledby="trades-title">
-          <div class="panel-head">
-            <h2 id="trades-title">Active trades</h2>
-            <span class="badge green">updating</span>
+    <section class="market-console" aria-label="Agent Bazaar dashboard">
+      <article class="console-card primary-console">
+        <div class="console-head">
+          <div class="console-title">
+            <strong>Agent marketplace dashboard</strong>
+            <span>Connect agents, publish capabilities, buy work from live supply.</span>
           </div>
-          <div class="panel-body">
-            <table class="trade-table">
-              <thead>
-                <tr>
-                  <th>Task</th>
-                  <th>Buyer</th>
-                  <th>Quotes</th>
-                  <th>Budget</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody id="trade-list"></tbody>
-            </table>
-          </div>
-        </section>
-
-        <aside class="side">
-          <section class="panel" aria-labelledby="selected-title">
-            <div class="panel-head">
-              <h2 id="selected-title">Selected RFQ</h2>
-              <span class="badge gold" id="selected-status">matching</span>
+          <span class="badge green" id="dashboard-status">market open</span>
+        </div>
+        <div class="console-body">
+          <div class="console-stats" aria-label="Market snapshot">
+            <div class="console-stat">
+              <span>Live sellers</span>
+              <strong id="dashboard-sellers">-</strong>
             </div>
-            <div class="panel-body">
-              <div class="selected-card">
-                <div>
-                  <strong id="selected-task">-</strong>
-                  <p id="selected-meta">-</p>
-                </div>
-                <span class="badge green" id="winner-name">winner</span>
+            <div class="console-stat">
+              <span>Open quotes</span>
+              <strong id="dashboard-quotes">-</strong>
+            </div>
+            <div class="console-stat">
+              <span>Current deal</span>
+              <strong id="dashboard-deal">ready</strong>
+            </div>
+          </div>
+          <div class="integration-rail">
+            <div class="integration-rail-head">
+              <strong>Connect an external seller SDK</strong>
+              <span class="badge blue" id="sdk-status">SDK ready</span>
+            </div>
+            <pre class="sdk-snippet">PYTHONPATH=. python examples/seller_sdk_quickstart.py</pre>
+            <p class="console-copy" id="dashboard-inventory">Seller capacity is loading...</p>
+            <div class="console-actions">
+              <span class="badge green">market_data</span>
+              <span class="badge blue">api_call</span>
+              <span class="badge gray">reputation ranked</span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="hero" aria-label="Agent Bazaar trade room">
+      <section class="panel" aria-labelledby="buyer-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="role-title">Buy work from the agent market</h2>
+            <p class="subtle" id="role-subtitle">Create demand and let matching pick live seller supply.</p>
+          </div>
+          <span class="badge blue">RFQ</span>
+        </div>
+        <div class="panel-body">
+          <div class="role-switch" aria-label="Demo role">
+            <button class="role-button active" id="buyer-role" type="button">Buyer view</button>
+            <button class="role-button" id="seller-role" type="button">Seller view</button>
+          </div>
+
+          <section class="role-panel" id="buyer-panel">
+            <p class="request-copy">
+              The buyer does not pick a hardcoded worker. It broadcasts a signed task,
+              ranks listed seller capacity, then pays only after the result hash verifies.
+            </p>
+            <form class="request-form" id="rfq-form">
+              <label>
+                Work to buy
+                <input
+                  id="prompt"
+                  placeholder="Example: Fetch spot price and 24h volume."
+                  value="Fetch spot price and 24h volume."
+                >
+                <span class="field-help">Demo-safe default: ask a seller to fetch live market data.</span>
+              </label>
+              <label>
+                Market pair
+                <input id="pair" placeholder="ETH/USDC" value="ETH/USDC">
+                <span class="field-help">Use `ETH/USDC` for the live Coinbase-backed seller task.</span>
+              </label>
+              <label>
+                Max buyer budget
+                <input id="budget" placeholder="0.50 USDC" value="0.50 USDC">
+                <span class="field-help">Any seller above this price will be rejected by matching.</span>
+              </label>
+              <button class="primary" id="buyer-submit" type="submit">Send RFQ to market</button>
+            </form>
+            <div class="action-status" id="buyer-action-status" aria-live="polite">
+              <div class="pulse-dot" aria-hidden="true"></div>
+              <div>
+                <strong>Ready to send RFQ</strong>
+                <span>Start by broadcasting demand. Matching, seller execution, and settlement happen as separate demo actions.</span>
+              </div>
+            </div>
+            <div class="operator-summary" id="buyer-operator-summary">
+              <h3>Live buyer run</h3>
+              <div class="summary-row">
+                <div class="summary-index">1</div>
+                <div><strong>Waiting for RFQ</strong><span>Send demand first, then step through matching, seller work, and payment.</span></div>
               </div>
             </div>
           </section>
 
-          <section class="panel" aria-labelledby="quotes-title">
-            <div class="panel-head">
-              <h2 id="quotes-title">Quote ranking</h2>
-              <span class="badge gray" id="formula">matching</span>
+          <section class="role-panel hidden" id="seller-panel">
+            <p class="request-copy">
+              A seller agent lists idle quota before buyers arrive. The market can
+              match this supply when a buyer asks for compatible work.
+            </p>
+            <form class="seller-form" id="listing-form">
+              <label>
+                Seller agent name
+                <input
+                  id="seller-label"
+                  placeholder="Example: Spare Market Data Agent"
+                  value="Spare Market Data Agent"
+                >
+                <span class="field-help">This is the public listing name buyers will see.</span>
+              </label>
+              <label>
+                Work this seller can do
+                <select id="seller-capabilities">
+                  <option value="market_data,api_call" selected>Market data API task</option>
+                  <option value="data_fetch,api_call">General data fetch</option>
+                  <option value="llm_inference,research">Research / LLM summarization</option>
+                </select>
+                <span class="field-help">Choose `Market data API task` for the ETH/USDC buyer demo.</span>
+              </label>
+              <label>
+                How much idle quota to sell
+                <input id="seller-quota" value="12">
+                <span class="field-help">Example: `12` means this seller can accept 12 buyer jobs.</span>
+              </label>
+              <label>
+                Minimum price per task
+                <input id="seller-price" value="0.32 USDC">
+                <span class="field-help">Keep this under the buyer budget, e.g. `0.32 USDC` under `0.50 USDC`.</span>
+              </label>
+              <button class="primary" id="seller-submit" type="submit">List seller capacity</button>
+            </form>
+            <div class="action-status" id="seller-action-status" aria-live="polite">
+              <div class="pulse-dot" aria-hidden="true"></div>
+              <div>
+                <strong>Ready to list idle capacity</strong>
+                <span>Submit this listing and buyers will see it in the market immediately.</span>
+              </div>
             </div>
-            <div class="panel-body">
-              <div class="quote-list" id="quotes"></div>
+            <div class="operator-summary" id="seller-operator-summary">
+              <h3>What happens after the seller clicks?</h3>
+              <div class="summary-row">
+                <div class="summary-index">1</div>
+                <div><strong>Seller appears in supply</strong><span>Buyers can match this listed capacity.</span></div>
+              </div>
             </div>
           </section>
 
-          <section class="panel" aria-labelledby="feed-title">
-            <div class="panel-head">
-              <h2 id="feed-title">Market activity</h2>
-              <span class="badge blue">live</span>
+          <div class="metrics" aria-label="Market metrics">
+            <div class="metric">
+              <span>Quotes</span>
+              <strong id="metric-quotes">3</strong>
             </div>
-            <div class="panel-body">
-              <div class="feed" id="feed"></div>
+            <div class="metric">
+              <span>Winner</span>
+              <strong id="metric-winner">-</strong>
             </div>
-          </section>
-        </aside>
-      </div>
+            <div class="metric">
+              <span>Status</span>
+              <strong id="metric-status">settled</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="deal-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="deal-title">Active deal room</h2>
+            <p class="subtle">Watch the current RFQ move through matching, seller work, and verified release.</p>
+          </div>
+          <span class="badge green" id="deal-status">settled</span>
+        </div>
+        <div class="panel-body">
+          <article class="deal-card">
+            <div class="deal-title">
+              <div>
+                <strong id="selected-task">-</strong>
+                <span id="selected-meta">-</span>
+              </div>
+              <span class="badge green" id="winner-name">winner</span>
+            </div>
+          </article>
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </section>
+
+      <aside class="right-stack" aria-label="Settlement and bids">
+        <section class="panel" aria-labelledby="bids-title">
+          <div class="panel-head">
+            <div>
+              <h2 id="bids-title">Why this seller won</h2>
+              <p class="subtle" id="formula">confidence * reputation / price</p>
+            </div>
+            <span class="badge gray">matching</span>
+          </div>
+          <div class="panel-body">
+            <div class="bid-list" id="quotes"></div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="settlement-title">
+          <div class="panel-head">
+            <div>
+              <h2 id="settlement-title">Verified delivery</h2>
+              <p class="subtle">The seller's payload must hash-check before payment.</p>
+            </div>
+            <span class="badge green">verified</span>
+          </div>
+          <div class="panel-body">
+            <div class="payload">
+              <h3>Returned payload</h3>
+              <p class="subtle">Canonical JSON hash checked by the buyer.</p>
+              <pre id="delivery-json">{}</pre>
+              <div class="settlement-grid">
+                <div class="settlement-cell">
+                  <span class="label">Escrow</span>
+                  <strong>Locked</strong>
+                </div>
+                <div class="settlement-cell">
+                  <span class="label">Hash</span>
+                  <strong id="result-hash">verified</strong>
+                </div>
+                <div class="settlement-cell">
+                  <span class="label">Payment</span>
+                  <strong id="payment-status">Released</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
     </section>
 
-    <section class="view" data-view="rfqs">
-      <div class="catalog" id="rfq-catalog"></div>
-    </section>
+    <section class="evidence-grid" aria-label="Evidence">
+      <section class="panel" aria-labelledby="supply-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="supply-title">Seller capacity board</h2>
+            <p class="subtle">Supply already listed before the buyer asks.</p>
+          </div>
+          <span class="badge green">listed supply</span>
+        </div>
+        <div class="panel-body">
+          <div class="supply-board" id="seller-board"></div>
+        </div>
+      </section>
 
-    <section class="view" data-view="agents">
-      <div class="catalog" id="agent-catalog"></div>
-    </section>
+      <section class="panel" aria-labelledby="events-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="events-title">Agent event log</h2>
+            <p class="subtle">What the buyer and seller agents exchange.</p>
+          </div>
+          <span class="badge blue">AXL lifecycle</span>
+        </div>
+        <div class="panel-body">
+          <div class="event-log" id="events"></div>
+        </div>
+      </section>
 
-    <section class="view" data-view="settlement">
-      <div class="catalog" id="settlement-catalog"></div>
+      <section class="panel" aria-labelledby="proofs-title">
+        <div class="panel-head">
+          <div>
+            <h2 id="proofs-title">Proof references</h2>
+            <p class="subtle">Recorded refs for the live/testnet credibility path.</p>
+          </div>
+          <span class="badge gold">Base Sepolia</span>
+        </div>
+        <div class="panel-body">
+          <div class="proof-list" id="proofs"></div>
+          <p class="footer-note">
+            Service mode executes the seller market-data task against Coinbase
+            Exchange before showing a verified delivery. Static file mode remains
+            playback data for offline review.
+          </p>
+        </div>
+      </section>
     </section>
   </main>
 
   <script>
-    const fallbackTrace = window.MARKET_TRACE;
-    let source = "file";
+    const fallbackTrace = window.MARKET_TRACE || {};
     let trace = fallbackTrace;
-    let selectedTradeId = "rfq-eth-spot";
+    let trade = {
+      buyer: "Research Buyer",
+      task: trace.rfq?.prompt || "ETH/USDC market data",
+      pair: trace.rfq?.pair || "ETH/USDC",
+      budget: formatUsdc(trace.rfq?.budget_atomic || 500000),
+      status: "ready",
+    };
+    let role = new URLSearchParams(location.search).get("role")
+      || localStorage.getItem("agent-bazaar-role")
+      || "buyer";
     let tick = 0;
-    let activeView = "market";
+    let buyerStage = "draft";
 
-    const baseTrades = [
-      { id: "rfq-eth-spot", buyer: "Research Buyer", task: "ETH/USDC market data", quotes: 3, status: "settling", budget: "$0.50" },
-      { id: "rfq-risk-14", buyer: "Risk Desk Agent", task: "Stablecoin risk brief", quotes: 5, status: "matching", budget: "$1.20" },
-      { id: "rfq-news-09", buyer: "News Scout", task: "Summarize Base ecosystem news", quotes: 4, status: "delivering", budget: "$0.80" },
-      { id: "rfq-code-22", buyer: "Code Review Agent", task: "Audit escrow edge cases", quotes: 6, status: "matching", budget: "$2.40" },
-      { id: "rfq-data-31", buyer: "Data Pipeline Agent", task: "Clean CSV and infer schema", quotes: 2, status: "locked", budget: "$0.65" },
-      { id: "rfq-chart-03", buyer: "Portfolio Agent", task: "Generate allocation report", quotes: 4, status: "settled", budget: "$1.75" },
+    const timelineSteps = [
+      ["RFQ broadcast", "Buyer sends the signed task to seller agents.", "Gensyn AXL", "blue"],
+      ["Sellers quote", "Agents compete on price, confidence, and reputation.", "bid market", "blue"],
+      ["Winner selected", "Buyer ranks quotes instead of choosing a fixed route.", "matching", "green"],
+      ["Funds locked", "KeeperHub locks escrow for the selected seller.", "escrow", "gold"],
+      ["Delivery verified", "Buyer checks the canonical JSON result hash.", "hash", "gold"],
+      ["Seller paid", "Payment releases and reputation feedback is recorded.", "settled", "green"],
     ];
 
-    const feedTemplates = [
-      "Signal Agent quoted on stablecoin risk brief",
-      "Fast Data Agent delivered ETH/USDC market data",
-      "Efficient Price Agent won by reputation-adjusted score",
-      "Research Buyer verified content hash",
-      "Risk Desk Agent opened a new RFQ",
-      "Code Review Agent received 2 new seller bids",
-      "Portfolio Agent released payment after delivery",
-      "Untested Low-Cost Agent rejected below reputation floor",
-    ];
+    function formatUsdc(atomic) {
+      const amount = Number(atomic || 0) / 1_000_000;
+      return `$${amount.toFixed(2)} USDC`;
+    }
 
-    const fmtUsdc = (atomic) => `$${(atomic / 1_000_000).toFixed(2)} USDC`;
-    const pct = (value) => `${(value * 100).toFixed(1)}%`;
-    const score = (value) => value == null ? "rejected" : value.toExponential(2);
+    function percent(value) {
+      return `${(Number(value || 0) * 100).toFixed(1)}%`;
+    }
+
+    function formatScore(value) {
+      return value == null ? "rejected" : Number(value).toExponential(2);
+    }
+
+    function short(value, length = 10) {
+      const text = String(value || "");
+      return text.length > length ? `${text.slice(0, length)}...` : text;
+    }
+
+    function stageAtLeast(stage) {
+      const order = ["draft", "rfq", "matched", "executing", "executed", "settled"];
+      return order.indexOf(buyerStage) >= order.indexOf(stage);
+    }
+
+    function winnerQuote() {
+      if (!stageAtLeast("matched") && buyerStage !== "failed") return null;
+      return (trace.quotes || []).find((quote) => quote.selected) || (trace.quotes || [])[0];
+    }
+
+    function selectedQuote() {
+      return (trace.quotes || []).find((quote) => quote.selected) || (trace.quotes || [])[0];
+    }
 
     async function loadMarket() {
       if (location.protocol !== "file:") {
@@ -685,218 +1204,528 @@
           const response = await fetch("/api/market", { cache: "no-store" });
           if (response.ok) {
             trace = await response.json();
-            source = "local-service";
+            trade = tradeFromTrace(trace, "Research Buyer");
+            trade.status = "ready";
           }
         } catch {
-          source = "file";
+          trace = fallbackTrace;
         }
       }
       render();
-      window.setInterval(() => {
-        tick += 1;
-        renderLiveParts();
-      }, 1800);
+      window.setInterval(refreshMarketSupply, 4000);
     }
 
     async function createRfq(event) {
       event.preventDefault();
-      const newTrade = {
-        id: `rfq-custom-${Date.now().toString().slice(-4)}`,
+      if (buyerStage === "rfq") {
+        matchBuyerRfq();
+        return;
+      }
+      if (buyerStage === "matched") {
+        await executeBuyerTask();
+        return;
+      }
+      if (buyerStage === "executed") {
+        settleBuyerTask();
+        return;
+      }
+      startBuyerRfq();
+    }
+
+    function startBuyerRfq() {
+      const submit = document.querySelector("#buyer-submit");
+      trade = {
         buyer: "You",
-        task: document.querySelector("#prompt").value,
-        quotes: 0,
-        status: "collecting",
-        budget: document.querySelector("#budget").value,
+        task: document.querySelector("#prompt").value.trim() || "Fetch market data.",
+        pair: document.querySelector("#pair").value.trim() || "ETH/USDC",
+        budget: document.querySelector("#budget").value.trim() || "0.50 USDC",
+        status: "rfq open",
       };
-      baseTrades.unshift(newTrade);
-      selectedTradeId = newTrade.id;
+      buyerStage = "rfq";
+      tick = 0;
+      trace = withLocalInput(trace, trade);
+      setActionStatus(
+        "buyer",
+        "RFQ broadcast to seller market",
+        "The buyer has posted demand. Next, run matching against live listed seller capacity."
+      );
+      renderBuyerSummary([
+        ["RFQ is open", `${trade.task} for ${trade.pair} is now waiting for compatible sellers.`],
+        ["Next action: match seller", "Click again to rank seller listings by capability, quota, price, and reputation."],
+        ["No seller has worked yet", "The delivery panel stays pending until the selected seller is explicitly triggered."]
+      ]);
+      renderHeader();
+      render();
+      submit.textContent = "Run market matching";
+    }
+
+    function matchBuyerRfq() {
+      const winner = selectedQuote();
+      buyerStage = "matched";
+      trade.status = "seller matched";
+      tick = 2;
+      setActionStatus(
+        "buyer",
+        `${winner?.seller_label || "Seller"} matched`,
+        "Matching selected a seller, but the seller has not executed the task yet."
+      );
+      renderBuyerSummary([
+        ["Seller selected", `${winner?.seller_label || "Seller"} won from the current supply board.`],
+        ["Escrow is ready", "Buyer budget can now be locked for this seller before work starts."],
+        ["Next action: trigger seller", "Click again to notify the seller and run the real market-data worker."]
+      ]);
+      render();
+      document.querySelector("#buyer-submit").textContent = "Notify seller to execute";
+    }
+
+    async function executeBuyerTask() {
+      const submit = document.querySelector("#buyer-submit");
+      const winner = selectedQuote();
+      buyerStage = "executing";
+      trade.status = "seller working";
+      tick = 3;
+      setActionStatus(
+        "buyer",
+        `Notifying ${winner?.seller_label || "seller"}...`,
+        "The seller is now running the market-data task. This is where the Coinbase-backed worker executes."
+      );
+      renderBuyerSummary([
+        ["Seller notified", `${winner?.seller_label || "Seller"} received the work request.`],
+        ["Worker running", "The seller is fetching live market data and preparing a delivery payload."],
+        ["Payment still locked", "The buyer cannot release funds until the payload hash verifies."]
+      ]);
+      submit.disabled = true;
+      submit.textContent = "Seller working...";
+      render();
 
       if (location.protocol !== "file:") {
-        await fetch("/api/rfqs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: newTrade.task,
-            pair: document.querySelector("#pair").value,
-            budget_atomic: 500000,
-          }),
-        });
-        source = "local-service";
+        try {
+          const response = await fetch("/api/rfqs", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              prompt: trade.task,
+              pair: trade.pair,
+              budget_atomic: parseBudgetAtomic(trade.budget),
+            }),
+          });
+          if (!response.ok) {
+            throw new Error(`RFQ failed with ${response.status}`);
+          }
+          trace = await response.json();
+          trade = tradeFromTrace(trace, "You");
+          trade.status = trace.delivery?.verified === false ? "seller failed" : "delivery ready";
+          buyerStage = trace.delivery?.verified === false ? "failed" : "executed";
+        } catch (error) {
+          buyerStage = "failed";
+          trade.status = "seller failed";
+          setActionStatus(
+            "buyer",
+            "RFQ failed before settlement",
+            String(error),
+            true
+          );
+          render();
+          return;
+        } finally {
+          submit.disabled = false;
+        }
+      } else {
+        trace = withLocalInput(trace, trade);
+        trade.status = "delivery ready";
+        buyerStage = "executed";
+      }
+
+      tick = 4;
+      render();
+      const deliveredWinner = winnerQuote();
+      if (trace.delivery?.verified === false) {
+        setActionStatus(
+          "buyer",
+          "Seller execution failed. Payment blocked.",
+          "No hash was verified, so the demo does not fake a release.",
+          true
+        );
+        renderBuyerSummary([
+          ["Matched seller failed", "The selected seller did not return a verified payload."],
+          ["Hash not verified", "No valid result hash means the buyer cannot accept delivery."],
+          ["Payment blocked", "The demo blocks release instead of pretending success."]
+        ]);
+        submit.textContent = "Start another RFQ";
+      } else {
+        setActionStatus(
+          "buyer",
+          `${deliveredWinner?.seller_label || "Seller"} returned a delivery`,
+          `Seller executed the task and returned ${trace.delivery?.content?.source || "a payload"}. Next, verify the hash and release payment.`
+        );
+        renderBuyerSummary([
+          ["Seller executed", `${trace.delivery?.content?.source || "Seller worker"} returned the task result.`],
+          ["Delivery ready", `Result hash ${short(trace.delivery?.result_hash || "", 12)} is ready for buyer verification.`],
+          ["Next action: verify and release", "Click again to accept the payload and show payment release."]
+        ]);
+        submit.textContent = "Verify delivery and release";
+      }
+    }
+
+    function settleBuyerTask() {
+      const winner = winnerQuote();
+      buyerStage = "settled";
+      trade.status = "settled";
+      tick = timelineSteps.length - 1;
+      render();
+      setActionStatus(
+        "buyer",
+        `Paid ${winner?.seller_label || "seller"} after verification`,
+        `Content hash ${short(trace.delivery?.result_hash || "", 12)} matched the payload, so escrow release is shown.`
+      );
+      renderBuyerSummary([
+        ["Buyer verified", `Content hash ${short(trace.delivery?.result_hash || "", 12)} matched the returned payload.`],
+        ["Payment released", "The seller is paid only after verification."],
+        ["Reputation recorded", "The completed delivery is ready to feed back into seller reputation."]
+      ]);
+      document.querySelector("#buyer-submit").textContent = "Start another RFQ";
+    }
+
+    async function createListing(event) {
+      event.preventDefault();
+      const submit = document.querySelector("#seller-submit");
+      const label = document.querySelector("#seller-label").value.trim() || "Seller Agent";
+      const capabilities = document.querySelector("#seller-capabilities").value || "market_data,api_call";
+      const quota = Number(document.querySelector("#seller-quota").value.replace(/[^0-9]/g, "")) || 1;
+      const price = parseBudgetAtomic(document.querySelector("#seller-price").value || "0.32 USDC");
+      setActionStatus(
+        "seller",
+        "Publishing seller capacity...",
+        "The seller is advertising quota and capabilities to the marketplace."
+      );
+      renderSellerSummary([
+        ["Publishing listing", "The seller is advertising idle quota to Agent Bazaar."],
+        ["Waiting for buyer RFQ", "A compatible buyer can match this supply after it is listed."]
+      ]);
+      submit.disabled = true;
+      submit.textContent = "Listing capacity...";
+      if (location.protocol !== "file:") {
+        try {
+          const response = await fetch("/api/listings", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              label,
+              capabilities,
+              quota_available: quota,
+              min_price_atomic: price,
+              confidence: 0.89,
+              success_rate: 0.93,
+              estimated_delivery_ms: 3000,
+            }),
+          });
+          if (!response.ok) {
+            throw new Error(`listing failed with ${response.status}`);
+          }
+          trace = await response.json();
+        } catch (error) {
+          setActionStatus("seller", "Seller listing failed", String(error), true);
+          render();
+          return;
+        } finally {
+          submit.disabled = false;
+          submit.textContent = "List seller capacity";
+        }
+      } else {
+        const seller = {
+          id: `local-seller-${Date.now()}`,
+          label,
+          capabilities: capabilities.split(",").map((item) => item.trim()),
+          quota_available: quota,
+          min_price_atomic: price,
+          confidence: 0.89,
+          success_rate: 0.93,
+          estimated_delivery_ms: 3000,
+          status: "online",
+        };
+        trace.sellers = [seller, ...(trace.sellers || [])];
+        submit.disabled = false;
+        submit.textContent = "List seller capacity";
       }
       render();
+      setActionStatus(
+        "seller",
+        `${label} is now listed`,
+        `${quota} tasks available at ${formatUsdc(price)} min price. Buyers can match this supply now.`
+      );
+      renderSellerSummary([
+        ["Capacity listed", `${label} is visible to buyers with ${quota} available tasks.`],
+        ["Buyer can match", "A buyer RFQ for market data can now select this seller."],
+        ["Quota will decrease", "When matched, this seller's available quota is consumed."]
+      ]);
+    }
+
+    async function refreshMarketSupply() {
+      if (location.protocol === "file:") return;
+      try {
+        const response = await fetch("/api/market", { cache: "no-store" });
+        if (!response.ok) return;
+        const nextTrace = await response.json();
+        trace.sellers = nextTrace.sellers;
+        if (!document.querySelector("#seller-panel").classList.contains("hidden")) {
+          renderSellers();
+          renderQuotes();
+          renderHeader();
+        }
+      } catch {
+        // The demo should keep its current state if the local service is stopped.
+      }
+    }
+
+    function tradeFromTrace(nextTrace, buyer) {
+      return {
+        buyer,
+        task: nextTrace.rfq?.prompt || trade.task,
+        pair: nextTrace.rfq?.pair || trade.pair,
+        budget: formatUsdc(nextTrace.rfq?.budget_atomic || parseBudgetAtomic(trade.budget)),
+        status: nextTrace.delivery?.verified === false ? "seller failed" : "settled",
+      };
+    }
+
+    function withLocalInput(currentTrace, nextTrade) {
+      const copy = structuredClone(currentTrace);
+      if (copy.rfq) {
+        copy.rfq.prompt = nextTrade.task;
+        copy.rfq.pair = nextTrade.pair;
+        copy.rfq.budget_atomic = parseBudgetAtomic(nextTrade.budget);
+      }
+      if (copy.delivery?.content) {
+        copy.delivery.content.pair = nextTrade.pair;
+      }
+      return copy;
+    }
+
+    function parseBudgetAtomic(value) {
+      const parsed = Number(String(value).replace(/[^0-9.]/g, ""));
+      return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed * 1_000_000) : 500000;
     }
 
     function render() {
-      const isService = source === "local-service";
-      document.querySelector("#source-badge").textContent =
-        isService ? "local service connected" : "file playback";
-      document.querySelector("#formula").textContent = trace.matching.formula;
-      renderTrades();
+      renderRole();
+      renderDashboard();
+      renderHeader();
+      renderSellers();
       renderQuotes();
-      renderSelected();
-      renderCatalogs();
-      renderLiveParts();
+      renderTimeline();
+      renderDelivery();
+      renderEvents();
+      renderProofs();
     }
 
-    function renderLiveParts() {
-      document.querySelector("#active-rfqs").textContent = baseTrades.length + (tick % 3);
-      document.querySelector("#quotes-min").textContent = 27 + (tick % 8);
-      document.querySelector("#settled-count").textContent = 42 + (tick % 6);
-      renderFeed();
-      renderTrades();
+    function renderDashboard() {
+      const sellers = trace.sellers || [];
+      const onlineSellers = sellers.filter((seller) => seller.status !== "offline");
+      const capacity = onlineSellers.reduce(
+        (total, seller) => total + Number(seller.quota_available || 0),
+        0
+      );
+      document.querySelector("#dashboard-sellers").textContent = String(onlineSellers.length);
+      document.querySelector("#dashboard-quotes").textContent = String((trace.quotes || []).length);
+      document.querySelector("#dashboard-deal").textContent = trade.status;
+      document.querySelector("#dashboard-inventory").textContent =
+        `${onlineSellers.length} online sellers expose ${capacity} total task slots. ` +
+        "Run the SDK quickstart to add another matchable seller.";
     }
 
-    function renderTrades() {
-      const root = document.querySelector("#trade-list");
-      root.innerHTML = "";
-      baseTrades.forEach((trade, index) => {
-        const row = document.createElement("tr");
-        row.className = trade.id === selectedTradeId ? "selected" : "";
-        const liveQuotes = trade.quotes + ((tick + index) % 2);
-        row.innerHTML = `
-          <td>
-            <button class="trade-button" type="button">
-              <span class="trade-title">${trade.task}</span>
-              <span class="trade-sub">${trade.id}</span>
-            </button>
-          </td>
-          <td>${trade.buyer}</td>
-          <td class="num">${liveQuotes}</td>
-          <td class="num">${trade.budget}</td>
-          <td><span class="badge ${statusClass(trade.status)}">${trade.status}</span></td>
-        `;
-        row.addEventListener("click", () => {
-          selectedTradeId = trade.id;
-          renderTrades();
-          renderQuotes();
-          renderSelected();
-        });
-        root.appendChild(row);
-      });
-    }
-
-    function renderSelected() {
-      const selected = baseTrades.find((trade) => trade.id === selectedTradeId) || baseTrades[0];
-      const winner = selected.id === "rfq-eth-spot"
-        ? trace.quotes.find((quote) => quote.selected)?.seller_label
-        : "Specialist Agent";
-      document.querySelector("#selected-task").textContent = selected.task;
+    function renderHeader() {
+      const winner = winnerQuote();
+      document.querySelector("#formula").textContent = trace.matching?.formula || "confidence * reputation / price";
+      document.querySelector("#metric-quotes").textContent = String((trace.quotes || []).length);
+      document.querySelector("#metric-winner").textContent = winner?.seller_label?.replace(" Agent", "") || "-";
+      document.querySelector("#metric-status").textContent = trade.status;
+      document.querySelector("#selected-task").textContent = trade.task;
       document.querySelector("#selected-meta").textContent =
-        `${selected.buyer} · ${selected.budget} · ${selected.quotes} quotes`;
-      document.querySelector("#selected-status").textContent = selected.status;
-      document.querySelector("#selected-status").className = `badge ${statusClass(selected.status)}`;
-      document.querySelector("#winner-name").textContent = winner || "pending";
+        `${trade.buyer} · ${trade.pair} · ${trade.budget} · ${(trace.quotes || []).length} quotes`;
+      document.querySelector("#winner-name").textContent = winner?.seller_label || "winner pending";
+      document.querySelector("#deal-status").textContent = trade.status;
+      document.querySelector("#deal-status").className = `badge ${statusTone(trade.status)}`;
+    }
+
+    function statusTone(status) {
+      if (status.includes("failed")) return "red";
+      if (status === "settled" || status === "delivery ready" || status === "seller matched") return "green";
+      if (status === "seller working") return "gold";
+      return "blue";
+    }
+
+    function renderRole() {
+      const isSeller = role === "seller";
+      document.querySelector("#buyer-panel").classList.toggle("hidden", isSeller);
+      document.querySelector("#seller-panel").classList.toggle("hidden", !isSeller);
+      document.querySelector("#buyer-role").classList.toggle("active", !isSeller);
+      document.querySelector("#seller-role").classList.toggle("active", isSeller);
+      document.querySelector("#role-title").textContent = isSeller
+        ? "Publish seller capacity"
+        : "Buy work from the agent market";
+      document.querySelector("#role-subtitle").textContent = isSeller
+        ? "Connect an agent, declare capabilities, and make it matchable."
+        : "Create demand and let matching pick live seller supply.";
+    }
+
+    function setRole(nextRole) {
+      role = nextRole;
+      localStorage.setItem("agent-bazaar-role", role);
+      renderRole();
+    }
+
+    function setActionStatus(kind, title, detail, isError = false) {
+      const root = document.querySelector(`#${kind}-action-status`);
+      if (!root) return;
+      root.classList.toggle("error", isError);
+      root.querySelector("strong").textContent = title;
+      root.querySelector("span").textContent = detail;
+    }
+
+    function renderBuyerSummary(rows) {
+      renderOperatorSummary("buyer", "Live buyer run", rows);
+    }
+
+    function renderSellerSummary(rows) {
+      renderOperatorSummary("seller", "Seller console", rows);
+    }
+
+    function renderOperatorSummary(kind, title, rows) {
+      const root = document.querySelector(`#${kind}-operator-summary`);
+      if (!root) return;
+      root.innerHTML = `
+        <h3>${title}</h3>
+        ${rows.map(([heading, detail], index) => `
+          <div class="summary-row">
+            <div class="summary-index">${index + 1}</div>
+            <div><strong>${heading}</strong><span>${detail}</span></div>
+          </div>
+        `).join("")}
+      `;
+    }
+
+    function renderTimeline() {
+      const root = document.querySelector("#timeline");
+      root.innerHTML = timelineSteps.map(([title, detail, badge, tone], index) => `
+        <article class="timeline-step ${index <= tick ? "active" : ""}">
+          <div class="step-index">${index + 1}</div>
+          <div>
+            <strong>${title}</strong>
+            <span>${detail}</span>
+          </div>
+          <span class="badge ${tone}">${badge}</span>
+        </article>
+      `).join("");
     }
 
     function renderQuotes() {
       const root = document.querySelector("#quotes");
-      const selected = baseTrades.find((trade) => trade.id === selectedTradeId);
       root.innerHTML = "";
-      const quotes = selected?.id === "rfq-eth-spot" ? trace.quotes : syntheticQuotes();
-      quotes.forEach((quote) => {
+      (trace.quotes || []).forEach((quote) => {
         const row = document.createElement("article");
-        row.className = `quote-row ${quote.selected ? "winner" : ""} ${quote.status}`;
+        const isWinner = (stageAtLeast("matched") || buyerStage === "failed") && quote.selected;
+        row.className = `bid-row ${isWinner ? "winner" : ""} ${quote.status === "rejected" ? "rejected" : ""}`;
         row.innerHTML = `
           <div>
             <strong>${quote.seller_label}</strong>
-            <span>${fmtUsdc(quote.price_atomic)} · ${pct(quote.confidence)} conf · ${pct(quote.success_rate)} rep</span>
+            <span>${formatUsdc(quote.price_atomic)} · ${percent(quote.confidence)} confidence · ${percent(quote.success_rate)} rep · ${quote.estimated_delivery_ms}ms</span>
           </div>
-          <div class="quote-score">${score(quote.score)}</div>
+          <div class="score">${formatScore(quote.score)}</div>
         `;
         root.appendChild(row);
       });
     }
 
-    function syntheticQuotes() {
-      return [
-        { seller_label: "Specialist Agent", price_atomic: 700000, confidence: 0.92, success_rate: 0.94, score: 1.24e-6, status: "eligible", selected: true },
-        { seller_label: "Budget Agent", price_atomic: 420000, confidence: 0.73, success_rate: 0.81, score: 1.18e-6, status: "eligible", selected: false },
-        { seller_label: "New Agent", price_atomic: 300000, confidence: 0.69, success_rate: 0.64, score: null, status: "rejected", selected: false },
-      ];
-    }
-
-    function renderFeed() {
-      const root = document.querySelector("#feed");
+    function renderSellers() {
+      const root = document.querySelector("#seller-board");
+      if (!root) return;
+      const selected = winnerQuote();
       root.innerHTML = "";
-      for (let index = 0; index < 9; index += 1) {
-        const msg = feedTemplates[(tick + index) % feedTemplates.length];
-        const node = document.createElement("article");
-        node.className = "event";
-        node.innerHTML = `
-          <div class="event-time">${String(index * 4 + tick).padStart(2, "0")}s</div>
-          <div><strong>${msg}</strong><span>market event</span></div>
+      (trace.sellers || []).forEach((seller) => {
+        const selectedSeller = selected?.listing_id === seller.id;
+        const card = document.createElement("article");
+        card.className = `seller-card ${selectedSeller ? "selected" : ""}`;
+        card.innerHTML = `
+          <div class="seller-card-head">
+            <div>
+              <strong>${seller.label}</strong>
+              <span>${(seller.capabilities || []).join(", ")} · ${seller.quota_available} tasks available</span>
+            </div>
+            <span class="badge ${selectedSeller ? "green" : "blue"}">${selectedSeller ? "matched" : seller.status || "online"}</span>
+          </div>
+          <span>${formatUsdc(seller.min_price_atomic)} min · ${percent(seller.success_rate)} rep · ${seller.estimated_delivery_ms}ms est.</span>
         `;
-        root.appendChild(node);
+        root.appendChild(card);
+      });
+    }
+
+    function renderDelivery() {
+      if (!stageAtLeast("executed") && buyerStage !== "failed") {
+        document.querySelector("#delivery-json").textContent = JSON.stringify({
+          status: buyerStage === "matched" || buyerStage === "executing"
+            ? "seller has not returned payload yet"
+            : "waiting for matched seller"
+        }, null, 2);
+        document.querySelector("#result-hash").textContent = "pending";
+        document.querySelector("#payment-status").textContent =
+          buyerStage === "matched" || buyerStage === "executing" ? "Locked" : "Not locked";
+        return;
       }
+      const content = trace.delivery?.content || {};
+      document.querySelector("#delivery-json").textContent = JSON.stringify(content, null, 2);
+      const verified = trace.delivery?.verified !== false;
+      document.querySelector("#result-hash").textContent = verified
+        ? short(trace.delivery?.result_hash || "verified", 12)
+        : "not verified";
+      document.querySelector("#payment-status").textContent =
+        verified && buyerStage === "settled" ? "Released" : verified ? "Locked" : "Blocked";
     }
 
-    function statusClass(status) {
-      if (status === "settled") return "green";
-      if (status === "matching" || status === "collecting") return "gold";
-      if (status === "delivering" || status === "locked" || status === "settling") return "blue";
-      return "gray";
-    }
-
-    function switchView(view) {
-      activeView = view;
-      document.querySelectorAll("[data-view]").forEach((node) => {
-        node.classList.toggle("active", node.dataset.view === view);
+    function renderEvents() {
+      const root = document.querySelector("#events");
+      root.innerHTML = "";
+      (trace.timeline || []).filter((_, index) => buyerStage === "settled" || index <= tick).forEach((event) => {
+        const row = document.createElement("article");
+        row.className = "event-row";
+        row.innerHTML = `
+          <div class="event-dot" aria-hidden="true"></div>
+          <div>
+            <strong>${event.label}</strong>
+            <span>${event.layer} · ${event.detail}</span>
+          </div>
+        `;
+        root.appendChild(row);
       });
-      document.querySelectorAll("[data-view-button]").forEach((button) => {
-        button.classList.toggle("active", button.dataset.viewButton === view);
-      });
-      renderCatalogs();
     }
 
-    function renderCatalogs() {
-      const rfqRoot = document.querySelector("#rfq-catalog");
-      const agentRoot = document.querySelector("#agent-catalog");
-      const settlementRoot = document.querySelector("#settlement-catalog");
-      if (!rfqRoot || !agentRoot || !settlementRoot) return;
-
-      rfqRoot.innerHTML = baseTrades.map((trade) => `
-        <article class="catalog-card">
-          <strong>${trade.task}</strong>
-          <p>${trade.buyer} · ${trade.quotes} quotes · ${trade.budget}</p>
-          <span class="badge ${statusClass(trade.status)}">${trade.status}</span>
-        </article>
-      `).join("");
-
-      agentRoot.innerHTML = [
-        ["Efficient Price Agent", "Best current score on ETH/USDC data tasks.", "0.88 reputation"],
-        ["Fast Data Agent", "Higher reputation, higher price, fast delivery.", "0.96 reputation"],
-        ["Specialist Agent", "Wins domain-specific RFQs like risk and code review.", "0.94 reputation"],
-        ["Budget Agent", "Cheaper quote source for low-stakes work.", "0.81 reputation"],
-        ["New Agent", "Often rejected until reputation improves.", "0.64 reputation"],
-        ["Signal Agent", "Monitors market and news RFQs.", "0.90 reputation"],
-      ].map(([name, desc, badge]) => `
-        <article class="catalog-card">
-          <strong>${name}</strong>
-          <p>${desc}</p>
-          <span class="badge blue">${badge}</span>
-        </article>
-      `).join("");
-
-      settlementRoot.innerHTML = [
-        ["Lock funds", "KeeperHub locks payment for the selected seller.", "automated"],
-        ["Confirm delivery", "Seller commits result hash after completing the task.", "verified"],
-        ["Release payment", "Buyer or KeeperHub releases after verification window.", "settled"],
-        ["Refund timeout", "If seller never delivers, claimRefund returns buyer funds.", "fallback"],
-        ["Reputation update", "Buyer feedback changes future matching score.", "ERC-8004"],
-        ["Quote proof", "Uniswap route proof is recorded separately from escrow settlement.", "quote"],
-      ].map(([name, desc, badge]) => `
-        <article class="catalog-card">
-          <strong>${name}</strong>
-          <p>${desc}</p>
-          <span class="badge green">${badge}</span>
-        </article>
-      `).join("");
+    function renderProofs() {
+      const root = document.querySelector("#proofs");
+      const proofLabels = [
+        ["uniswap_quote_id", "Uniswap quote"],
+        ["keeperhub_lock_execution", "KeeperHub lock"],
+        ["keeperhub_release_execution", "KeeperHub release"],
+        ["escrow_address", "Escrow contract"],
+        ["erc8004_reputation", "Reputation registry"],
+        ["feedback_tx", "Feedback tx"],
+      ];
+      root.innerHTML = "";
+      proofLabels.forEach(([key, label]) => {
+        const value = trace.proofs?.[key];
+        if (!value) return;
+        const row = document.createElement("article");
+        row.className = "proof-row";
+        row.innerHTML = `
+          <strong>${label}</strong>
+          <div class="proof-value">${value}</div>
+          <span>Reference from the live/testnet credibility path.</span>
+        `;
+        root.appendChild(row);
+      });
     }
 
     document.querySelector("#rfq-form").addEventListener("submit", createRfq);
-    document.querySelectorAll("[data-view-button]").forEach((button) => {
-      button.addEventListener("click", () => switchView(button.dataset.viewButton));
-    });
+    document.querySelector("#listing-form").addEventListener("submit", createListing);
+    document.querySelector("#buyer-role").addEventListener("click", () => setRole("buyer"));
+    document.querySelector("#seller-role").addEventListener("click", () => setRole("seller"));
     loadMarket();
   </script>
 </body>

@@ -24,6 +24,7 @@ from agents.lib.axl_client import AxlClient
 from agents.lib.config import Config, load_config
 from agents.lib.erc8004_client import Erc8004Client
 from agents.lib.escrow_client import EscrowClient
+from agents.lib.market_data_task import fetch_market_data
 from agents.lib.signing import sign_payload, verify_payload
 from schemas.quote import DeliveryPayload, Erc8004ReputationSnapshot, QuoteMessage
 from schemas.rfq import RFQMessage
@@ -160,18 +161,8 @@ class SellerAgent:
         await self.axl.send(buyer_peer_id, signed)
 
     async def _run_task(self, task_input: dict[str, Any]) -> dict[str, Any]:
-        """Execute the task. Extend this to call real APIs or LLMs."""
-        prompt = str(task_input.get("prompt", ""))
-        pair = str(task_input.get("pair", "ETH/USDC"))
-        # Demo: return a realistic-looking market data response
-        return {
-            "pair": pair,
-            "price": 3412.15,
-            "volume_24h": 1_234_567_890,
-            "source": "agentbazaar-seller",
-            "timestamp": int(time.time()),
-            "prompt_echo": prompt[:64],
-        }
+        """Execute the seller task against a real public market-data source."""
+        return await fetch_market_data(task_input)
 
     async def aclose(self) -> None:
         await self.axl.aclose()

@@ -71,17 +71,21 @@ pip install -e '.[dev]'
 anvil
 bash scripts/deploy_contracts.sh
 
-# demo (no external services needed)
+# deterministic terminal walkthrough
 PYTHONPATH=. python scripts/run_demo.py
 
-# live market screen
+# static market screen playback
 PYTHONPATH=. python scripts/generate_market_trace.py
 open demo/market-trace.html
 
-# local service-backed version
+# service-backed demo site; seller lists capacity, buyer RFQ matches and executes worker
 PYTHONPATH=. python scripts/serve_trade_playback.py
+open http://127.0.0.1:4174/market-trace.html
 
-# Gensyn AXL P2P demo (real AXL nodes from .env)
+# open-box external seller SDK; publishes a matchable agent into the demo market
+PYTHONPATH=. python examples/seller_sdk_quickstart.py
+
+# Gensyn AXL P2P demo; seller also executes the market-data worker
 bash scripts/start_gensyn_axl_nodes.sh
 PYTHONPATH=. python scripts/run_axl_demo.py --external
 
@@ -106,6 +110,7 @@ contracts/
   test/                     7 Foundry tests
 
 agents/
+  sdk.py                    open-box Python SDK for external seller integration
   buyer_agent.py            RFQ → quotes → Uniswap quote → lock → verify
   seller_agent.py           receive RFQ → quote → execute → deliver
   lib/
@@ -128,4 +133,7 @@ scripts/
   check_gensyn_axl.py       topology/send/recv smoke test for real Gensyn AXL nodes
   axl_mock_node.py          local replay node for no-install demos
   deploy_contracts.sh       foundry deploy to Anvil
+
+examples/
+  seller_sdk_quickstart.py  copy-paste seller integration using AgentBazaarSeller
 ```

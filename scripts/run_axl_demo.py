@@ -19,13 +19,16 @@ Then it runs a buyer and seller through the full message sequence:
   7.  Seller sends DeliveryPayload back over AXL
   8.  Buyer validates content hash — trade complete
 
-External calls are represented with deterministic demo refs so this AXL-only
-script runs without sponsor credentials. The live/testnet path uses real
-KeeperHub workflows, escrow transactions, ERC-8004 registries, and Uniswap
-quote API responses.
+Settlement calls are represented with deterministic demo refs so this AXL
+transport script runs without sponsor credentials. Seller execution is real:
+the selected seller queries Coinbase Exchange public market data before
+returning a signed delivery payload. The live/testnet path uses real KeeperHub
+workflows, escrow transactions, ERC-8004 registries, and Uniswap quote API
+responses.
 """
 import argparse
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -46,6 +49,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from agents.lib.axl_client import AxlClient  # noqa: E402
+from agents.lib.market_data_task import fetch_market_data  # noqa: E402
 from agents.lib.signing import sign_payload  # noqa: E402
 from schemas.quote import DeliveryPayload, Erc8004ReputationSnapshot, QuoteMessage  # noqa: E402
 from schemas.rfq import Budget, Constraints, RFQMessage, Task, TaskType  # noqa: E402
@@ -67,6 +71,11 @@ SELLER_ADDR = f"http://localhost:{SELLER_PORT}"
 def _sign(d: dict[str, Any], sk: SigningKey) -> dict[str, Any]:
     d["signature"] = sign_payload(d, sk)
     return d
+
+
+def _content_hash(content: dict[str, object]) -> str:
+    canonical = json.dumps(content, sort_keys=True, separators=(",", ":")).encode()
+    return "0x" + hashlib.sha3_256(canonical).hexdigest()
 
 
 async def _drain(axl: AxlClient, timeout: float) -> list[dict[str, Any]]:
@@ -92,8 +101,11 @@ async def run_buyer(
     buyer_sk: SigningKey,
     buyer_addr: str,
     buyer_peer_id_hex: str,
-) -> dict[str, str]:
+    task_input: dict[str, str | int | float | bool] | None = None,
+    budget_atomic: int = 500_000,
+) -> dict[str, Any]:
     axl = AxlClient(buyer_endpoint, peer_id=buyer_peer_id_hex, api_mode=axl_transport)
+    task_input = task_input or {"pair": "ETH/USDC", "prompt": "get spot price"}
 
     # 1. Build + broadcast RFQ
     rfq = RFQMessage(
@@ -102,10 +114,10 @@ async def run_buyer(
         buyer_axl_peer_id=buyer_sk.verify_key.encode().hex(),
         task=Task(
             type=TaskType.DATA_FETCH,
-            input={"pair": "ETH/USDC", "prompt": "get spot price"},
+            input=task_input,
             output_schema={"type": "object"},
         ),
-        budget=Budget(max_usdc_atomic=500_000, accepted_tokens=["USDC"]),
+        budget=Budget(max_usdc_atomic=budget_atomic, accepted_tokens=["USDC"]),
         constraints=Constraints(min_reputation_score=0.8, deadline_unix=int(time.time()) + 600),
         signature="",
     )
@@ -170,6 +182,9 @@ async def run_buyer(
         raw_delivery = raw_delivery["payload"]
 
     delivery = DeliveryPayload.model_validate(raw_delivery)
+    expected_hash = _content_hash(delivery.content)
+    if expected_hash.lower() != delivery.result_hash.lower():
+        raise RuntimeError("delivery result_hash did not match returned content")
     console.print(
         f"[green]← Delivery[/] result_hash={delivery.result_hash[:20]}…  "
         f"content keys={list(delivery.content.keys())}"
@@ -189,6 +204,7 @@ async def run_buyer(
         "release_tx":       release_tx,
         "feedback_tx":      feedback_tx,
         "result_hash":      delivery.result_hash,
+        "content":          delivery.content,
     }
 
 
@@ -240,16 +256,8 @@ async def run_seller(
             task_input = msg.get("task_input", {})
             console.print(f"[magenta]Seller[/] received locked trigger for rfq={rfq_id[:8]}…")
 
-            content = {
-                "pair": task_input.get("pair", "ETH/USDC"),
-                "price": 3412.15,
-                "volume_24h": 1_234_567_890,
-                "source": "agent-bazaar-seller",
-                "timestamp": int(time.time()),
-            }
-            import hashlib
-            canonical = json.dumps(content, sort_keys=True, separators=(",", ":")).encode()
-            result_hash = "0x" + hashlib.sha3_256(canonical).hexdigest()
+            content = await fetch_market_data(task_input)
+            result_hash = _content_hash(content)
 
             confirm_tx = "0x" + "33" * 32
             console.print(f"[dim]  confirmDelivery : {confirm_tx[:20]}…[/]")
